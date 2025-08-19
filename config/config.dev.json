@@ -1,0 +1,6 @@
+{
+  "listeners": [{ "address": "0.0.0.0", "port": 8080 }],
+  "log": { "level": "DEBUG" },
+  "static": { "dirs": ["./src/media"] },
+  "threads_num": 0
+}

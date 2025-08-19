@@ -1,0 +1,35 @@
+services:
+  app:
+    # ---- DEV профиль ----
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /work
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/work
+    command: >
+      bash -lc "
+        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug &&
+        cmake --build build &&
+        ./build/api -c config/config.dev.json
+      "
+
+  api:
+   # ----- PROD -------
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config/config.prod.json:/app/config.json:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
