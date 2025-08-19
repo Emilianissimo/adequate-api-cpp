@@ -6,3 +6,6 @@ build
 .DS_Store
 *.swp
 .env
+uploads/
+src/media/
+CMakeSettings.json

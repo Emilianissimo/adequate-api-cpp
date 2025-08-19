@@ -19,5 +19,14 @@
             "password": "pLabn_42c",
             "is_fast": false
         }
+    ],
+    "redis_clients": [
+        {
+            "name": "default",
+            "host": "redis",
+            "port": 6379,
+            "passwd": "root_123456",
+            "db": 0
+        }
     ]
 }
