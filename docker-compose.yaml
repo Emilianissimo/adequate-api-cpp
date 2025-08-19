@@ -1,35 +1,72 @@
 services:
   app:
-    # ---- DEV профиль ----
     profiles: ["dev"]
+    container_name: drogon_api_container
     build:
       context: .
       dockerfile: Dockerfile
     working_dir: /work
-    ports:
-      - "8080:8080"
     volumes:
       - ./:/work
+      - ./config/config.dev.json:/work/config/config.dev.json:ro
     command: >
       bash -lc "
         cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug &&
         cmake --build build &&
-        ./build/api -c config/config.dev.json
-      "
-
-  api:
-   # ----- PROD -------
-    profiles: ["prod"]
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+        ./build/api -c config/config.dev.json"
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: 
+      - drogon_api
     ports:
       - "8080:8080"
+
+  redis:
+    image: redis:alpine
+    container_name: drogon_api_redis_container
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "sh", "-lc", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+    command:
+      - redis-server
+      - '--requirepass root_123456'
     volumes:
-      - ./config/config.prod.json:/app/config.json:ro
-    read_only: true
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
-    restart: unless-stopped
+      - cache:/data
+    networks:
+      - drogon_api
+
+  db:
+    container_name: drogon_api_db_container
+    image: postgres:15.0-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - db:/var/lib/postgresql/data  
+    networks:
+      - drogon_api
+
+volumes:
+  db:
+    driver: local
+  cache:
+    driver: local
+
+networks:
+  drogon_api:
+    driver: bridge
