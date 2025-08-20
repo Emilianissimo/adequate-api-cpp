@@ -9,3 +9,4 @@ build
 uploads/
 src/media/
 CMakeSettings.json
+.vscode/

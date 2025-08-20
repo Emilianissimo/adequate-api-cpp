@@ -1,19 +1,13 @@
+version: "3.9"
+
 services:
   app:
     profiles: ["dev"]
-    container_name: drogon_api_container
+    container_name: cpp_api_container
     build:
       context: .
       dockerfile: Dockerfile
     working_dir: /work
-    volumes:
-      - ./:/work
-      - ./config/config.dev.json:/work/config/config.dev.json:ro
-    command: >
-      bash -lc "
-        cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug &&
-        cmake --build build &&
-        ./build/api -c config/config.dev.json"
     env_file:
       - ./.env
     depends_on:
@@ -21,14 +15,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks: 
-      - drogon_api
+    networks:
+      - cpp_api
     ports:
       - "8080:8080"
 
   redis:
     image: redis:alpine
-    container_name: drogon_api_redis_container
+    container_name: cpp_api_redis_container
     restart: on-failure
     healthcheck:
       test: ["CMD", "sh", "-lc", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
@@ -41,10 +35,10 @@ services:
     volumes:
       - cache:/data
     networks:
-      - drogon_api
+      - cpp_api
 
   db:
-    container_name: drogon_api_db_container
+    container_name: cpp_api_db_container
     image: postgres:15.0-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -59,7 +53,7 @@ services:
     volumes:
       - db:/var/lib/postgresql/data  
     networks:
-      - drogon_api
+      - cpp_api
 
 volumes:
   db:
@@ -68,5 +62,5 @@ volumes:
     driver: local
 
 networks:
-  drogon_api:
+  cpp_api:
     driver: bridge
