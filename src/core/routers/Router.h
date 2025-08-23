@@ -10,7 +10,7 @@
 
 class Router {
 public:
-    using RouteFn = std::function<net::awaitable<Response>(Request&)>;
+    using RouteFn = std::function<net::awaitable<Outcome>(Request&)>;
     using MethodMap = std::unordered_map<http::verb, RouteFn>;
     
     Router& add(http::verb method, std::string path, RouteFn fn);
@@ -32,9 +32,11 @@ private:
     std::vector<std::shared_ptr<MiddlewareInterface>> middlewares_;
 
     static std::string normalizeTarget(const Request& request);
-    static Response make404(const Request& request);
-    static Response make405(const Request& request, const MethodMap& mm);
-    static Response makeOptionsAllow(const Request& request, const MethodMap& mm);
+    static Outcome make404(const Request& request);
+    static Outcome make405(const Request& request, const MethodMap& mm);
+    static Outcome makeOptionsAllow(const Request& request, const MethodMap& mm);
 
-    net::awaitable<Response> runChain(Request& request, RouteFn leaf) const;
+    net::awaitable<Outcome> runChain(Request& request, RouteFn leaf) const;
+    Response render(const Request& req, Outcome&& outcome) const;
+    net::awaitable<Response> runAfter(const Request& req, Response&& res) const;
 };
