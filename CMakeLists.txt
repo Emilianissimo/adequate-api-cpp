@@ -3,8 +3,10 @@ project(beast_api CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS
     src/*.cpp
@@ -13,7 +15,9 @@ file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS
 add_executable(app ${APP_SOURCES})
 
 target_link_libraries(app
+    PRIVATE
     Boost::system
     Boost::thread
+    nlohmann_json::nlohmann_json
     pthread
 )

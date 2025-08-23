@@ -1,12 +1,13 @@
 FROM ubuntu:22.04
 
-# Базовые инструменты и зависимости для сборки Boost и приложения
+# Deps
 RUN apt-get update && apt-get install -y \
     build-essential g++ cmake ninja-build make git curl ca-certificates \
     libssl-dev zlib1g-dev \
+    nlohmann-json3-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# --- Boost 1.84+ (для http::message_generator и полноценного co_await) ---
+# --- Boost 1.84+ (for http::message_generator and co_await) ---
 WORKDIR /tmp
 ENV BOOST_VERSION=1.84.0
 ENV BOOST_DIR=boost_${BOOST_VERSION//./_}
@@ -19,7 +20,7 @@ RUN curl -L https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_DI
  && ldconfig \
  && cd / && rm -rf /tmp/${BOOST_DIR} /tmp/${BOOST_DIR}.tar.bz2
 
-# --- Сборка приложения ---
+# --- Build ---
 WORKDIR /work
 COPY CMakeLists.txt ./
 COPY src ./src
@@ -27,7 +28,7 @@ COPY src ./src
 RUN cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && \
     cmake --build build
 
-# Параметры по умолчанию (перекрываются .env/compose)
+# Params (rewrites by .env/compose)
 ENV APP_HOST=0.0.0.0
 ENV APP_PORT=8080
 
