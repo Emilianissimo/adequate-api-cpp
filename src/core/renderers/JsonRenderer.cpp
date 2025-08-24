@@ -1,4 +1,4 @@
-#include "JsonRenderer.h"
+#include "core/renderers/JsonRenderer.h"
 
 Response JsonRenderer::jsonResponse(
     const Request& request,

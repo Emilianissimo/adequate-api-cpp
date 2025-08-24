@@ -1,4 +1,4 @@
-#include "BaseSerializer.h"
+#include "core/serializers/BaseSerializer.h"
 #include <string>
 #include <optional>
 
@@ -7,5 +7,6 @@ struct UserSerializer : BaseSerializer<UserSerializer> {
     std::string name;
     std::optional<std::string> email;
 
+    // Macros should live only in header file
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserSerializer, id, name, email)
 };

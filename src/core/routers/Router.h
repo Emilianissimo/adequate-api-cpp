@@ -1,7 +1,7 @@
 #pragma once
 
-#include "HttpInterface.h"
-#include "MiddlewareInterface.h"
+#include "core/interfaces/HttpInterface.h"
+#include "core/interfaces/MiddlewareInterface.h"
 #include <unordered_map>
 #include <string>
 #include <vector>

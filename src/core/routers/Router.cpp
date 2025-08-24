@@ -1,6 +1,5 @@
-#include "Router.h"
-#include "JsonRenderer.h"
-#include "MiddlewareInterface.h"
+#include "core/routers/Router.h"
+#include "core/renderers/JsonRenderer.h"
 #include <boost/beast/http.hpp>
 #include <boost/beast/core/string.hpp>
 #include <algorithm>

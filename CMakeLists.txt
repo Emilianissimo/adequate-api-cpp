@@ -21,3 +21,7 @@ target_link_libraries(app
     nlohmann_json::nlohmann_json
     pthread
 )
+
+target_include_directories(app PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+)
