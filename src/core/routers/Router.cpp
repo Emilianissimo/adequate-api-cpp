@@ -39,7 +39,8 @@ static std::string buildAllowHeader(const Router::MethodMap& mm) {
 }
 
 Outcome Router::make404(const Request& request) {
-    return JsonResult{json{{"error", "Not found"}}, http::status::not_found, false};
+    JsonResult result{json{{"error", "Not found"}}, http::status::not_found, false};
+    return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
 }
 
 Outcome Router::make405(const Request& request, const MethodMap& mm) {
