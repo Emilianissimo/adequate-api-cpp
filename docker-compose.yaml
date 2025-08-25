@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   app:
     profiles: ["dev"]
@@ -54,6 +52,18 @@ services:
       - db:/var/lib/postgresql/data  
     networks:
       - cpp_api
+
+  migrate:
+    image: migrate/migrate:4
+    profiles: ["dev"]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    env_file: .env
+    entrypoint: ["migrate", "-path", "/migrations", "-database", "${DATABASE_URL}"]
+    networks: [cpp_api]
 
 volumes:
   db:
