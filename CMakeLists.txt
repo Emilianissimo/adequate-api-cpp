@@ -7,6 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Boost REQUIRED COMPONENTS system thread)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(PostgreSQL REQUIRED)
 
 file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS
     src/*.cpp
@@ -19,9 +20,11 @@ target_link_libraries(app
     Boost::system
     Boost::thread
     nlohmann_json::nlohmann_json
+    ${PostgreSQL_LIBRARIES}
     pthread
 )
 
 target_include_directories(app PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${PostgreSQL_INCLUDE_DIRS}
 )

@@ -13,8 +13,24 @@ Router& Router::add(http::verb method, std::string path, RouteFn fn) {
     return *this;
 }
 
-void Router::use(std::shared_ptr<MiddlewareInterface> middleware) {
-    middlewares_.push_back(std::move(middleware));
+Router& Router::use(std::shared_ptr<MiddlewareInterface> middleware) {
+    global_middlewares_.push_back(std::move(middleware));
+    return *this;
+}
+
+Router& Router::use(std::string prefix, std::shared_ptr<MiddlewareInterface> mw) {
+    scoped_middlewares_.push_back({std::move(prefix), std::move(mw)});
+    return *this;
+}
+
+std::vector<std::shared_ptr<MiddlewareInterface>> Router::collectMiddlewaresFor(const std::string& path) const {
+    std::vector<std::shared_ptr<MiddlewareInterface>> out = global_middlewares_;
+    for (auto &s : scoped_middlewares_) {
+        if (path.rfind(s.prefix, 0) == 0) {
+            out.push_back(s.middleware);
+        }
+    }
+    return out;
 }
 
 static std::string buildAllowHeader(const Router::MethodMap& mm) {
@@ -64,7 +80,7 @@ std::string Router::normalizeTarget(const Request& request) {
     return target_path;
 }
 
-net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf) const {
+net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const {
     // Compiling chain of middleware to one next()
     using Next = MiddlewareInterface::Next;
     
@@ -73,7 +89,7 @@ net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf) const {
     };
 
     // Оборачиваем в обратном порядке: последний mw близко к leaf
-    for (auto middleware = middlewares_.rbegin(); middleware != middlewares_.rend(); ++middleware) {
+    for (auto middleware = middlewares.rbegin(); middleware != middlewares.rend(); ++middleware) {
         auto& middleware_ = *middleware;
         Next prev = std::move(next);
         next = [middleware_, prev](Request& request_) -> net::awaitable<Outcome> {
@@ -84,9 +100,9 @@ net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf) const {
     co_return co_await next(request);
 }
 
-net::awaitable<Response> Router::runAfter(const Request& request, Response&& response) const {
+net::awaitable<Response> Router::runAfter(const Request& request, Response&& response, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const {
     Response result = std::move(response);
-    for (auto& middleware : middlewares_) {
+    for (auto& middleware : middlewares) {
         result = co_await middleware->after(request, std::move(result));
     }
     co_return result;
@@ -113,19 +129,20 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
     const auto path = this->normalizeTarget(request);
     auto itPath = table_.find(path);
 
+    auto middlewares = collectMiddlewaresFor(path);
     if (itPath == table_.end()) {
-        co_return co_await this->runAfter(request, this->render(request, this->make404(request)));
+        co_return co_await this->runAfter(request, this->render(request, this->make404(request)), middlewares);
     }
 
     const auto& methods = itPath->second;
 
     // Auto-HEAD: if no HEAD, but GET exists — return GET without body
     if (request.method() == http::verb::head && !methods.count(http::verb::head) && methods.count(http::verb::get)) {
-        Outcome outcome = co_await runChain(request, methods.at(http::verb::get));
+        Outcome outcome = co_await runChain(request, methods.at(http::verb::get), middlewares);
         Response response = this->render(request, std::move(outcome));
         response.body().clear();
         response.set(http::field::content_length, "0");
-        for (auto& middleware : middlewares_) {
+        for (auto& middleware : middlewares) {
             response = co_await middleware->after(request, std::move(response));
         };
         co_return response;
@@ -133,16 +150,16 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
 
     // Auto-OPTIONS: if no OPTIONS — return Allow
     if (request.method() == http::verb::options && !methods.count(http::verb::options)) {
-        co_return co_await this->runAfter(request, this->render(request, this->makeOptionsAllow(request, methods)));
+        co_return co_await this->runAfter(request, this->render(request, this->makeOptionsAllow(request, methods)), middlewares);
     }
 
     auto itMeth = methods.find(request.method());
     if (itMeth == methods.end()) {
-        co_return co_await this->runAfter(request, this->render(request, this->make405(request, methods)));
+        co_return co_await this->runAfter(request, this->render(request, this->make405(request, methods)), middlewares);
     }
 
     auto fn = itMeth->second;
-    auto outcome = co_await this->runChain(request, itMeth->second);
+    auto outcome = co_await this->runChain(request, itMeth->second, middlewares);
     Response response = this->render(request, std::move(outcome));
-    co_return co_await this->runAfter(request, std::move(response));
+    co_return co_await this->runAfter(request, std::move(response), middlewares);
 }

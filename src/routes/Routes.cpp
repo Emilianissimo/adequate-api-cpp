@@ -11,11 +11,15 @@ inline Router::RouteFn bind_handler(C* obj, Method m) {
 namespace app{
     static HealthController healthController;
 
-    void define_routes(Router& router){
+    void define_routes(Router& router, const AppContext& ctx){
         // Middlewares
         // router.use(std::make_shared<RequestIdMiddleware>());
         // router.use(std::make_shared<LoggingMiddleware>());
 
         router.get("/health", bind_handler(&healthController, &HealthController::index));
+
+        // DI example
+        // r.get("/users", [repo = std::make_shared<UserRepo>(ctx.pg)]
+        //     (Request& req) -> net::awaitable<Outcome> { ... });
     }
 }

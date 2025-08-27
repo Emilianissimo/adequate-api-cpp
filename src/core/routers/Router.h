@@ -23,20 +23,26 @@ public:
     Router& patch(std::string path, RouteFn fn) { return add(http::verb::patch, std::move(path), std::move(fn)); };
     Router& delete_(std::string path, RouteFn fn) { return add(http::verb::delete_, std::move(path), std::move(fn)); };
 
-    void use(std::shared_ptr<MiddlewareInterface> middleware);
+    Router& use(std::shared_ptr<MiddlewareInterface> middleware); // Use globally
+    Router& use(std::string pathPrefix, std::shared_ptr<MiddlewareInterface> middleware); // Use locally (scoped)
 
     net::awaitable<Response> dispatch(Request& request) const;
 
 private:
     std::unordered_map<std::string, MethodMap> table_;
-    std::vector<std::shared_ptr<MiddlewareInterface>> middlewares_;
+
+    std::vector<std::shared_ptr<MiddlewareInterface>> global_middlewares_;
+    struct ScopedMiddlewares { std::string prefix; std::shared_ptr<MiddlewareInterface> middleware; };
+    std::vector<ScopedMiddlewares> scoped_middlewares_;
+
+    std::vector<std::shared_ptr<MiddlewareInterface>> collectMiddlewaresFor(const std::string& path) const;
 
     static std::string normalizeTarget(const Request& request);
     static Outcome make404(const Request& request);
     static Outcome make405(const Request& request, const MethodMap& mm);
     static Outcome makeOptionsAllow(const Request& request, const MethodMap& mm);
 
-    net::awaitable<Outcome> runChain(Request& request, RouteFn leaf) const;
+    net::awaitable<Outcome> runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const;
     Response render(const Request& req, Outcome&& outcome) const;
-    net::awaitable<Response> runAfter(const Request& req, Response&& res) const;
+    net::awaitable<Response> runAfter(const Request& req, Response&& res, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const;
 };

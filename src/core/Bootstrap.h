@@ -4,5 +4,5 @@
 
 class Bootstrap {
 public:
-    int run(const EnvConfig& env, Router& router);
+    int run(boost::asio::io_context& ioc, const EnvConfig& env, Router& router);
 };

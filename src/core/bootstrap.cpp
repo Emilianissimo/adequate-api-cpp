@@ -1,5 +1,6 @@
 #include "core/Bootstrap.h"
 #include "core/routers/Router.h"
+#include "core/db/postgres/interfaces/PgPool.h"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -11,7 +12,6 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <iostream>
 #include <thread>
-
 
 namespace beast = boost::beast;
 namespace http  = beast::http;
@@ -60,10 +60,8 @@ static awaitable<void> listener(const std::string host, uint16_t port, Router& r
     }
 }
 
-int Bootstrap::run(const EnvConfig& env, Router& router) {
+int Bootstrap::run(boost::asio::io_context& ioc, const EnvConfig& env, Router& router) {
     try {
-        net::io_context ioc{ static_cast<int>(std::max(1u, std::thread::hardware_concurrency())) };
-
         net::signal_set signals(ioc, SIGINT, SIGTERM);
         signals.async_wait([&](auto, auto){ ioc.stop(); });
 

@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 # Deps
 RUN apt-get update && apt-get install -y \
     build-essential g++ cmake ninja-build make git curl ca-certificates \
-    libssl-dev zlib1g-dev \
+    libssl-dev zlib1g-dev libpq-dev \
     nlohmann-json3-dev \
  && rm -rf /var/lib/apt/lists/*
 
