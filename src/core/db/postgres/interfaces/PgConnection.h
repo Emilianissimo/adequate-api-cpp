@@ -7,6 +7,7 @@
 #include <memory>
 #include <optional>
 #include <chrono>
+#include <unordered_set>
 
 namespace net = boost::asio;
 
@@ -43,6 +44,7 @@ private:
     std::string dsn_;
     PGconn* conn_{nullptr};
     std::optional<net::posix::stream_descriptor> stream_descriptor_;
+    std::unordered_set<std::string> prepared_; // per-connection cache
 
     net::awaitable<void> wait_readable(std::chrono::steady_clock::time_point deadline);
     net::awaitable<void> wait_writable(std::chrono::steady_clock::time_point deadline);
@@ -55,4 +57,5 @@ private:
     );
 
     static PgResult buildResult(PGresult* r);
+    void cancel() noexcept; // best-effort PQcancel
 };

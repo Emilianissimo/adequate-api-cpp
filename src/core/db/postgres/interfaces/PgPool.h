@@ -28,6 +28,7 @@ public:
 
 private:
     net::any_io_executor executor_;
+    net::strand<net::any_io_executor> strand_;
     std::string dsn_;
     const std::size_t size_;
     std::vector<std::shared_ptr<PgConnection>> idle_;
