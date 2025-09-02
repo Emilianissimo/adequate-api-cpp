@@ -15,6 +15,7 @@ int main() {
     // DI context
     AppContext ctx;
     ctx.pg = std::make_shared<PgPool>(ioc.get_executor(), env.pg_dsn, env.pg_pool_size);
+    wire(ctx);
     // plug any other
     // --- end DI context
 

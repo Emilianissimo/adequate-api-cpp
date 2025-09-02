@@ -4,8 +4,6 @@
 #include <boost/asio/awaitable.hpp>
 #include <nlohmann/json.hpp>
 
-namespace net = boost::asio;
-
 class HealthController {
 public:
     net::awaitable<Outcome> index(Request& req);
