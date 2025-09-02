@@ -1,7 +1,7 @@
 #include "core/db/postgres/interfaces/PgPool.h"
 #include "core/db/postgres/interfaces/PgConnection.h"
-#include "core/db/postgres/ChannelHelper.h"
 
+#include <boost/asio/as_tuple.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <deque>
 #include <stdexcept>
@@ -63,7 +63,7 @@ net::awaitable<PgResult> PgPool::query(
 
 
 net::awaitable<std::shared_ptr<PgConnection>> PgPool::make_or_wait() {
-    co_await net::dispatch(strand_);
+    co_await net::dispatch(strand_, net::use_awaitable);
 
     if (stopping_) {
         throw std::runtime_error("PgPool is shutting down");
@@ -86,7 +86,16 @@ net::awaitable<std::shared_ptr<PgConnection>> PgPool::make_or_wait() {
     }
 
     // 3) Wait on channel for a returned connection
-    auto got = co_await channel_recv<std::shared_ptr<PgConnection>>(channel_);
+    auto tup = co_await channel_.async_receive(
+        net::as_tuple(net::use_awaitable_t<net::any_io_executor>{})
+    );
+
+    auto ec  = std::get<0>(tup);
+    auto got = std::get<1>(tup);
+
+    if (ec) {
+        throw boost::system::system_error(ec);
+    }
     co_return got;
 }
 
@@ -101,9 +110,9 @@ void PgPool::release(std::shared_ptr<PgConnection> connection) {
             if (created_at_) --created_at_;
             return; // drop
         }
-        if (channel_.try_send(c)) {
-            return; // отдали ожидающему
+        if (channel_.try_send(boost::system::error_code{}, c)) {
+            return; // gave back to awaited one
         }
-        idle_.push_back(std::move(c)); // паркуем
+        idle_.push_back(std::move(c)); // park
     });
 }

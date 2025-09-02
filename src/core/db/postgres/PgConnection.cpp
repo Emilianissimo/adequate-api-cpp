@@ -58,7 +58,7 @@ PgResult PgConnection::buildResult(PGresult* result){
             } else {
                 const char* val = PQgetvalue(result, i, j);
                 int len = PQgetlength(result, i, j);
-                row.columns.push_back(PgValue{std::string{val, len}, false});
+                row.columns.push_back(PgValue{std::string{val, static_cast<std::size_t>(len)}, false});
             }
         }
         out.rows.push_back(std::move(row));

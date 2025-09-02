@@ -19,16 +19,9 @@ struct AppContext {
     std::unique_ptr<UsersController> usersController;
 };
 
-void wire(AppContext& ctx) {
-    ctx.usersRepository = std::make_unique<UsersRepository>(ctx.pg);
-    ctx.usersService = std::make_unique<UsersService>(*ctx.usersRepository);
-    ctx.usersController = std::make_unique<UsersController>(*ctx.usersService);
-
-    ctx.healthController = std::make_unique<HealthController>();
-}
-
 namespace appctx {
     void init(std::shared_ptr<AppContext> ctx);
+    void wire(std::shared_ptr<AppContext> ctx);
 
     AppContext& get();
 };

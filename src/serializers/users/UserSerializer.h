@@ -1,8 +1,11 @@
-#include "core/serializers/BaseSerializer.h"
-#include "entities/UserEntity.h"
-#include "helpers/DatetimeConverter.h"
-#include <string>
+#pragma once
 #include <optional>
+#include <string>
+#include <nlohmann/json.hpp>
+
+#include "entities/UserEntity.h"
+#include "core/serializers/BaseSerializer.h"
+#include "helpers/DatetimeConverter.h"
 
 class UserSerializer : public BaseSerializer<UserSerializer> {
 public:
@@ -24,6 +27,20 @@ public:
         return userSerializer;
     }
 
+    // for current optinal picture field we must provide custom to_json
+    friend void to_json(nlohmann::json& j, const UserSerializer& s) {
+        j = nlohmann::json{
+            {"id", s.id},
+            {"username", s.username},
+            {"email", s.email},
+            {"created_at", s.created_at}
+        };
+        // optional -> null or string
+        j["picture"] = s.picture.has_value()
+            ? nlohmann::json(*s.picture)
+            : nlohmann::json(nullptr);
+    }
+    // In other cases macros with be enough
     // Macros should live only in header file
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserSerializer, id, username, picture, created_at)
+    // NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserSerializer, id, username, picture, created_at)
 };

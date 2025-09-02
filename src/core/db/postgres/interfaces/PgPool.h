@@ -35,7 +35,7 @@ private:
     std::size_t created_at_{0};
 
     // Queue of awating objects
-    net::experimental::channel<void(std::shared_ptr<PgConnection>)> channel_;
+    net::experimental::channel<void(boost::system::error_code, std::shared_ptr<PgConnection>)> channel_;
     bool stopping_{false};
     net::awaitable<std::shared_ptr<PgConnection>> make_or_wait();
     void release(std::shared_ptr<PgConnection> connection);

@@ -3,13 +3,13 @@
 #include "controllers/UsersController.h"
 
 namespace app{
-    void define_routes(Router& router, const AppContext& ctx){
+    void define_routes(Router& router, const std::shared_ptr<AppContext> ctx){
         // Middlewares
         // router.use(std::make_shared<RequestIdMiddleware>());
         // router.use(std::make_shared<LoggingMiddleware>());
 
-        router.get("/health", bind_handler(ctx.healthController.get(), &HealthController::index));
-        router.get("/users", bind_handler(ctx.usersController.get(), &UsersController::index));
+        router.get("/health", bind_handler(ctx->healthController.get(), &HealthController::index));
+        router.get("/users", bind_handler(ctx->usersController.get(), &UsersController::index));
 
         // DI example
         // r.get("/users", [repo = std::make_shared<UserRepo>(ctx.pg)]
