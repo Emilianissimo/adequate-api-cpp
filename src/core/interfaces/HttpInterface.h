@@ -5,6 +5,5 @@
 namespace http = boost::beast::http;
 namespace net = boost::asio;
 
-using Request = http::request<http::string_body>;
 using Response = http::response<http::string_body>;
 using Handler = net::awaitable<Response>;

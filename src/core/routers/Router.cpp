@@ -1,4 +1,5 @@
 #include "core/routers/Router.h"
+#include "core/errors/Errors.h"
 #include "core/renderers/JsonRenderer.h"
 #include <boost/beast/http.hpp>
 #include <boost/beast/core/string.hpp>
@@ -60,10 +61,15 @@ Outcome Router::make404(const Request& request) {
 }
 
 Outcome Router::make405(const Request& request, const MethodMap& mm) {
-    JsonResult result{ json{{"error","Method Not Allowed"}}, http::status::method_not_allowed, false };
+    JsonResult result{ json{{"error", "Method Not Allowed"}}, http::status::method_not_allowed, false };
     Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
     tmp.set(http::field::allow, buildAllowHeader(mm));
     return tmp;
+}
+
+Outcome Router::make500(const Request& request, std::string& err) {
+    JsonResult result{json{{"error", err}}, http::status::internal_server_error, false};
+    return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
 }
 
 Outcome Router::makeOptionsAllow(const Request& request, const MethodMap& mm) {
@@ -126,6 +132,8 @@ Response Router::render(const Request& request, Outcome&& outcome) const {
 }
 
 net::awaitable<Response> Router::dispatch(Request& request) const {
+    int error_code;
+    std::string error_msg;
     const auto path = this->normalizeTarget(request);
     auto itPath = table_.find(path);
 
@@ -133,7 +141,6 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
     if (itPath == table_.end()) {
         co_return co_await this->runAfter(request, this->render(request, this->make404(request)), middlewares);
     }
-
     const auto& methods = itPath->second;
 
     // Auto-HEAD: if no HEAD, but GET exists — return GET without body
@@ -148,7 +155,7 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
         co_return response;
     }
 
-    // Auto-OPTIONS: if no OPTIONS — return Allow
+     // Auto-OPTIONS: if no OPTIONS — return Allow
     if (request.method() == http::verb::options && !methods.count(http::verb::options)) {
         co_return co_await this->runAfter(request, this->render(request, this->makeOptionsAllow(request, methods)), middlewares);
     }
@@ -158,8 +165,31 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
         co_return co_await this->runAfter(request, this->render(request, this->make405(request, methods)), middlewares);
     }
 
-    auto fn = itMeth->second;
-    auto outcome = co_await this->runChain(request, itMeth->second, middlewares);
-    Response response = this->render(request, std::move(outcome));
-    co_return co_await this->runAfter(request, std::move(response), middlewares);
+    try {
+        auto fn = itMeth->second;
+        auto outcome = co_await this->runChain(request, itMeth->second, middlewares);
+        Response response = this->render(request, std::move(outcome));
+        co_return co_await this->runAfter(request, std::move(response), middlewares);
+    } catch (const DbError& e) {
+        error_code = 500;
+        error_msg = e.what() && *e.what() ? e.what() : "Database error";
+    } catch (const std::exception& e) {
+        error_code = 500;
+        error_msg = e.what() && *e.what() ? e.what() : "Unexpected error";
+    }
+
+    if (error_code == 500) {
+        co_return co_await this->runAfter(
+            request,
+            this->render(request, this->make500(request, error_msg)),
+            middlewares
+        );
+    }
+
+    error_msg = "Unexpected error";
+    co_return co_await this->runAfter(
+        request,
+        this->render(request, this->make500(request, error_msg)),
+        middlewares
+    );
 }

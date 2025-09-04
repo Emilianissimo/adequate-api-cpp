@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/interfaces/HttpInterface.h"
+#include "core/request/Request.h"
 #include "core/interfaces/MiddlewareInterface.h"
 #include <unordered_map>
 #include <string>
@@ -40,6 +41,7 @@ private:
     static std::string normalizeTarget(const Request& request);
     static Outcome make404(const Request& request);
     static Outcome make405(const Request& request, const MethodMap& mm);
+    static Outcome make500(const Request& request, std::string& err);
     static Outcome makeOptionsAllow(const Request& request, const MethodMap& mm);
 
     net::awaitable<Outcome> runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const;

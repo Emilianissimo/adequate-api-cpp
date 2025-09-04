@@ -9,7 +9,7 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(std::size_t li
     auto result = co_await pool_->query(
         "SELECT id, username, picture, email, created_at, updated_at "
         "FROM users ORDER BY id "
-        "LIMIT $1::int OFFSET $2::int",
+        "LIMIT $1::int OFFSET $2::int;",
         params,
         std::chrono::seconds(5)
     );
@@ -31,4 +31,23 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(std::size_t li
     }
 
     co_return users;
+}
+
+net::awaitable<void> UsersRepository::create(UserEntity& entity) {
+    std::vector<std::optional<std::string>> params;
+    // Password should be encrypted in service
+    params.emplace_back(entity.username);
+    params.emplace_back(entity.email);
+    params.emplace_back(entity.picture);
+    params.emplace_back(entity.password);
+    auto result = co_await pool_->query(
+        "INSERT INTO users (username, email, picture, password) "
+        "VALUES ($1,$2,$3,$4) RETURNING id;",
+        params,
+        std::chrono::seconds(5)
+    );
+
+    if (!result.rows.empty() && !result.rows[0].columns[0].is_null) {
+        entity.id = std::stoll(result.rows[0].columns[0].data);
+    }
 }

@@ -6,4 +6,5 @@ class UsersRepository : BaseRepository {
 public:
     using BaseRepository::BaseRepository;
     net::awaitable<std::vector<UserEntity>> get_list(std::size_t limit, std::size_t offset);
+    net::awaitable<void> create(UserEntity& entity);
 };

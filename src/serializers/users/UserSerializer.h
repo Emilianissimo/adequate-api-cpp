@@ -7,15 +7,16 @@
 #include "core/serializers/BaseSerializer.h"
 #include "helpers/DatetimeConverter.h"
 
-class UserSerializer : public BaseSerializer<UserSerializer> {
+class UserSerializer final : public BaseSerializer<UserSerializer, UserEntity> {
 public:
     UserSerializer() = default;
 
-    int id;
+    std::int64_t id;
     std::string username;
     std::optional<std::string> picture;
     std::string email;
     std::string created_at;
+    std::string updated_at;
 
     static UserSerializer fromEntity(const UserEntity& entity) {
         UserSerializer userSerializer;
@@ -24,7 +25,19 @@ public:
         userSerializer.picture = entity.picture;
         userSerializer.email = entity.email;
         userSerializer.created_at = to_iso_string(entity.created_at);
+        userSerializer.updated_at = to_iso_string(entity.updated_at);
         return userSerializer;
+    }
+
+    UserEntity toEntity() {
+        UserEntity userEntity;
+        userEntity.id = this->id;
+        userEntity.username = this->username;
+        userEntity.picture = this->picture;
+        userEntity.email = this->email;
+        userEntity.created_at = parse_pg_timestamp(this->created_at);
+        userEntity.updated_at = parse_pg_timestamp(this->updated_at);
+        return userEntity;
     }
 
     // for current optinal picture field we must provide custom to_json
@@ -33,7 +46,8 @@ public:
             {"id", s.id},
             {"username", s.username},
             {"email", s.email},
-            {"created_at", s.created_at}
+            {"created_at", s.created_at},
+            {"updated_at", s.updated_at}
         };
         // optional -> null or string
         j["picture"] = s.picture.has_value()

@@ -4,9 +4,14 @@
 #include "routes/Routes.h"
 #include "core/db/postgres/interfaces/PgPool.h"
 #include "di/AppContext.h"
+#include "core/loggers/LoggerSingleton.h"
+#include "core/loggers/strategies/ConsoleLoggerStrategy.h"
 
 int main() {
     auto env = EnvConfig::load();
+
+    // Singletons
+    LoggerSingleton::init(std::make_shared<ConsoleLoggerStrategy>());
 
     boost::asio::io_context ioc{
         static_cast<int>(std::max(1u, std::thread::hardware_concurrency()))

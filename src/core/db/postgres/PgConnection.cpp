@@ -1,4 +1,5 @@
 #include "core/db/postgres/interfaces/PgConnection.h"
+#include "core/errors/Errors.h"
 
 #include <boost/asio/steady_timer.hpp>
 #include <boost/system/error_code.hpp>
@@ -429,8 +430,12 @@ net::awaitable<PgResult> PgConnection::runQueryWithTimeout(
                     have_result = true;
                 } else if (st == PGRES_BAD_RESPONSE || st == PGRES_FATAL_ERROR) {
                     std::string em = PQresultErrorMessage(r) ? PQresultErrorMessage(r) : "query error";
+                    std::string sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE)
+                                        ? PQresultErrorField(r, PG_DIAG_SQLSTATE)
+                                        : "XXXXX"; // unknown
+
                     PQclear(r);
-                    throw std::runtime_error(em);
+                    throw DbError(map_sqlstate(sqlstate), em);
                 }
                 PQclear(r);
             }

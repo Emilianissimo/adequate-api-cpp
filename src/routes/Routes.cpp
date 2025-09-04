@@ -9,7 +9,9 @@ namespace app{
         // router.use(std::make_shared<LoggingMiddleware>());
 
         router.get("/health", bind_handler(ctx->healthController.get(), &HealthController::index));
+        
         router.get("/users", bind_handler(ctx->usersController.get(), &UsersController::index));
+        router.post("/users", bind_handler(ctx->usersController.get(), &UsersController::store));
 
         // DI example
         // r.get("/users", [repo = std::make_shared<UserRepo>(ctx.pg)]

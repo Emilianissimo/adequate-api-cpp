@@ -21,14 +21,16 @@ using net::awaitable;
 using net::co_spawn;
 using net::detached;
 using net::use_awaitable;
+using RawRequest = http::request<http::string_body>;
 
 static awaitable<void> session(tcp::socket socket, Router& router) {
     beast::flat_buffer buffer;
     try {
         for (;;) {
-            Request req;
-            co_await http::async_read(socket, buffer, req, use_awaitable);
+            RawRequest raw;
+            co_await http::async_read(socket, buffer, raw, use_awaitable);
 
+            Request req(std::move(raw));
             Response res = co_await router.dispatch(req);
             bool keep = res.keep_alive();
 
