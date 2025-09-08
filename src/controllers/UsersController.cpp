@@ -4,6 +4,7 @@
 #include "core/errors/Errors.h"
 #include <nlohmann/json.hpp>
 #include "core/loggers/LoggerSingleton.h"
+#include "filters/users/UserListFilter.h"
 
 net::awaitable<Outcome> UsersController::index(Request& request) {
     std::ostringstream ss;
@@ -14,10 +15,9 @@ net::awaitable<Outcome> UsersController::index(Request& request) {
     LoggerSingleton::get().info(ss.str());
     ss.clear();
 
-    std::size_t limit  = 50;
-    std::size_t offset = 0;
-
-    std::vector<UserSerializer> users = co_await service_.list(limit, offset);
+    UserListFilter filters;
+    filters.parseRequestQuery(request.query());
+    std::vector<UserSerializer> users = co_await service_.list(filters);
 
     nlohmann::json body = nlohmann::json::array();
     for (auto& user : users) {

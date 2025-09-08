@@ -1,16 +1,34 @@
 #include "repositories/users/UsersRepository.h"
 #include "helpers/DatetimeConverter.h"
+#include "core/db/postgres/builder/SQLSelectBuilder.h"
 
-net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(std::size_t limit, std::size_t offset){
-    std::vector<std::optional<std::string>> params;
-    params.emplace_back(std::to_string(limit));
-    params.emplace_back(std::to_string(offset));
+net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter& filters){
+    SQLSelectBuilder qb("SELECT id, username, picture, email, created_at, updated_at FROM users");
+    if (filters.id.has_value()) {
+        qb.where("id", filters.id.value_or(0));
+    }
+    if (filters.id__in.has_value()) {
+        qb.whereAny("id", "bigint", filters.id__in.value());
+    }
+    if (filters.username__in.has_value()) {
+        qb.whereAny("username", "text", filters.username__in.value());
+    }
+    if (filters.username.has_value()) {
+        qb.where("username", filters.username.value());
+    }
+    if (filters.email.has_value()) {
+        qb.where("email", filters.email.value());
+    }
+    if (filters.limit.has_value()) {
+        qb.limit(filters.limit.value());
+    }
+    if (filters.offset.has_value()) {
+        qb.limit(filters.offset.value());
+    }
 
     auto result = co_await pool_->query(
-        "SELECT id, username, picture, email, created_at, updated_at "
-        "FROM users ORDER BY id "
-        "LIMIT $1::int OFFSET $2::int;",
-        params,
+        qb.str() + " ORDER BY id",
+        qb.params(),
         std::chrono::seconds(5)
     );
 
@@ -38,11 +56,10 @@ net::awaitable<void> UsersRepository::create(UserEntity& entity) {
     // Password should be encrypted in service
     params.emplace_back(entity.username);
     params.emplace_back(entity.email);
-    params.emplace_back(entity.picture);
     params.emplace_back(entity.password);
     auto result = co_await pool_->query(
-        "INSERT INTO users (username, email, picture, password) "
-        "VALUES ($1,$2,$3,$4) RETURNING id;",
+        "INSERT INTO users (username, email, password) "
+        "VALUES ($1,$2,$3) RETURNING id;",
         params,
         std::chrono::seconds(5)
     );

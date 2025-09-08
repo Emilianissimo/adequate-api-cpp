@@ -1,5 +1,7 @@
 #pragma once
 #include <boost/beast/http.hpp>
+#include <boost/url.hpp>
+#include <unordered_map>
 #include <nlohmann/json.hpp>
 
 namespace http = boost::beast::http;
@@ -14,6 +16,16 @@ public:
     RawRequest& raw() { return req_; }
 
     const std::string& body() const { return req_.body(); }
+
+
+    std::unordered_map<std::string, std::string> query() const {
+        std::unordered_map<std::string, std::string> params;
+        boost::urls::url_view url_view_(this->target());
+        for (auto qp : url_view_.params()) {
+            params.emplace(std::string(qp.key), std::string(qp.value));
+        }
+        return params;
+    }
 
     nlohmann::json json() const {
         try {

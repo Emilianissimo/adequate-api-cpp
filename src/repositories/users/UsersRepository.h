@@ -1,10 +1,11 @@
 #pragma once
 #include "serializers/users/UserSerializer.h"
-#include "repositories/BaseRepository.h"
+#include "core/repositories/BaseRepository.h"
+#include "filters/users/UserListFilter.h"
 
 class UsersRepository : BaseRepository {
 public:
     using BaseRepository::BaseRepository;
-    net::awaitable<std::vector<UserEntity>> get_list(std::size_t limit, std::size_t offset);
+    net::awaitable<std::vector<UserEntity>> get_list(UserListFilter& filters);
     net::awaitable<void> create(UserEntity& entity);
 };

@@ -8,11 +8,12 @@ class UsersService final : public UsersServiceInterface {
 public:
     explicit UsersService(UsersRepository& repo) : repo_(repo) {}
 
-    net::awaitable<std::vector<UserSerializer>> list(std::size_t limit, std::size_t offset) override {
-        limit = std::clamp<std::size_t>(limit, 1, 1000);
+    net::awaitable<std::vector<UserSerializer>> list(UserListFilter& filters) override {
+        LoggerSingleton::get().info("UsersService::list: started");
+        filters.limit = std::clamp<std::size_t>(filters.limit.value_or(50), 1, 1000);
 
         // place for transactions if you need them
-        std::vector<UserEntity> users = co_await repo_.get_list(limit, offset);
+        std::vector<UserEntity> users = co_await repo_.get_list(filters);
         std::vector<UserSerializer> serializedUsers;
         serializedUsers.reserve(users.size());
 

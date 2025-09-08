@@ -16,30 +16,18 @@ public:
 
     std::int64_t id;
     std::string username;
-    std::optional<std::string> picture;
     std::string email;
-    std::string password;
 
     static UserCreateResponseSerializer fromEntity(const UserEntity& entity) {
+        LoggerSingleton::get().info("UserCreateResponseSerializer::fromEntity: started");
         UserCreateResponseSerializer serialized;
         serialized.id = entity.id;
         serialized.username = entity.username;
         serialized.email = entity.email;
-        serialized.picture = entity.picture;
         return serialized;
     }
 
-    friend void to_json(nlohmann::json& j, const UserCreateResponseSerializer& s) {
-        j = nlohmann::json{
-            {"id", s.id},
-            {"username", s.username},
-            {"email", s.email},
-        };
-        // optional -> null or string
-        j["picture"] = s.picture.has_value()
-            ? nlohmann::json(*s.picture)
-            : nlohmann::json(nullptr);
-    }
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserSerializer, id, username, email)
 };
 
 class UserCreateSerializer final : public BaseSerializer<UserCreateSerializer, UserEntity>{
@@ -47,23 +35,22 @@ public:
     UserCreateSerializer() = default;
 
     std::string username;
-    std::optional<std::string> picture;
     std::string email;
     std::string password;
 
     static UserCreateSerializer fromEntity(const UserEntity& entity) {
+        LoggerSingleton::get().info("UserCreateSerializer::fromEntity: started");
         UserCreateSerializer serializer;
         serializer.username = entity.username;
-        serializer.picture = entity.picture;
         serializer.email = entity.email;
         serializer.password = entity.password;
         return serializer;
     }
 
     UserEntity toEntity() {
+        LoggerSingleton::get().info("UserCreateSerializer::toEntity: started");
         UserEntity userEntity;
         userEntity.username = this->username;
-        userEntity.picture = this->picture;
         userEntity.email = this->email;
         userEntity.password = this->password;
         return userEntity;
@@ -103,13 +90,5 @@ public:
         s.username = j["username"].get<std::string>();
         s.email    = j["email"].get<std::string>();
         s.password = j["password"].get<std::string>();
-
-        LoggerSingleton::get().debug("UserCreateSerializer::from_json: checking picture");
-        if (j.contains("picture") && j["picture"].is_string()) {
-            auto pic = j["picture"].get<std::string>();
-            if (!pic.empty()) {
-                s.picture = pic;
-            }
-        }
     }
 };
