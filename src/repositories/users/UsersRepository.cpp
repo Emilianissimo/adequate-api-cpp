@@ -1,9 +1,9 @@
 #include "repositories/users/UsersRepository.h"
 #include "helpers/DatetimeConverter.h"
-#include "core/db/postgres/builder/SQLSelectBuilder.h"
+#include "core/db/postgres/builder/SQLBuilder.h"
 
 net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter& filters){
-    SQLSelectBuilder qb("SELECT id, username, picture, email, created_at, updated_at FROM users");
+    SQLBuilder qb("SELECT id, username, picture, email, created_at, updated_at FROM users");
     if (filters.id.has_value()) {
         qb.where("id", filters.id.value_or(0));
     }
@@ -19,6 +19,9 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter
     if (filters.email.has_value()) {
         qb.where("email", filters.email.value());
     }
+
+    qb.orderBy("id");
+
     if (filters.limit.has_value()) {
         qb.limit(filters.limit.value());
     }
@@ -27,7 +30,7 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter
     }
 
     auto result = co_await pool_->query(
-        qb.str() + " ORDER BY id",
+        qb.str(),
         qb.params(),
         std::chrono::seconds(5)
     );

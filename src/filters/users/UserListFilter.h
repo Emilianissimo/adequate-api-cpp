@@ -1,8 +1,8 @@
+#pragma once
 #include <iostream>
 #include "core/filters/BaseFilter.h"
-#include "core/interfaces/FiltersInterface.h"
 
-class UserListFilter : BaseFilter, public FiltersInterface {
+class UserListFilter : public BaseFilter {
 public:
     std::optional<std::uint64_t> id;
     std::optional<std::vector<std::uint64_t>> id__in;

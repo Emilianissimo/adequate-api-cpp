@@ -1,4 +1,4 @@
-#include <iostream>
+#pragma once
 #include "core/interfaces/FiltersInterface.h"
 
 class BaseFilter : public FiltersInterface {

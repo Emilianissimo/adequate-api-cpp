@@ -27,7 +27,7 @@ public:
         return serialized;
     }
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserSerializer, id, username, email)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserCreateResponseSerializer, id, username, email)
 };
 
 class UserCreateSerializer final : public BaseSerializer<UserCreateSerializer, UserEntity>{

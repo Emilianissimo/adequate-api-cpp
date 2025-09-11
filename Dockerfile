@@ -15,7 +15,7 @@ RUN curl -L https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_DI
     -o ${BOOST_DIR}.tar.bz2 \
  && tar xf ${BOOST_DIR}.tar.bz2 \
  && cd ${BOOST_DIR} \
- && ./bootstrap.sh --with-libraries=system,filesystem,thread \
+ && ./bootstrap.sh --with-libraries=system,filesystem,thread,url \
  && ./b2 -j$(nproc) cxxflags="-std=c++20" install \
  && ldconfig \
  && cd / && rm -rf /tmp/${BOOST_DIR} /tmp/${BOOST_DIR}.tar.bz2

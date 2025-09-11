@@ -20,6 +20,7 @@ public:
 
     std::unordered_map<std::string, std::string> query() const {
         std::unordered_map<std::string, std::string> params;
+        
         boost::urls::url_view url_view_(this->target());
         for (auto qp : url_view_.params()) {
             params.emplace(std::string(qp.key), std::string(qp.value));

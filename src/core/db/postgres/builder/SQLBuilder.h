@@ -44,6 +44,10 @@ public:
         params_.emplace_back(std::to_string(*n));
     }
 
+    void orderBy(const std::string& fieldName) {
+        sql_ += " ORDER BY " + fieldName;
+    }
+
     // SQL
     std::string str() const {
         return base_ + sql_;
