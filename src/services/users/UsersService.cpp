@@ -3,6 +3,7 @@
 #include "core/loggers/LoggerSingleton.h"
 #include <algorithm>
 #include <iostream>
+#include <bcrypt/BCrypt.hpp>
 
 class UsersService final : public UsersServiceInterface {
 public:
@@ -38,6 +39,8 @@ public:
         LoggerSingleton::get().info(ss.str());
         ss.clear();
         UserEntity user = data.toEntity();
+        // hashing password
+        user.password = BCrypt::generateHash(user.password);
         
         LoggerSingleton::get().debug(
             "UsersService::create: Creating user by repo"

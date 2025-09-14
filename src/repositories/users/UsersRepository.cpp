@@ -3,7 +3,9 @@
 #include "core/db/postgres/builder/SQLBuilder.h"
 
 net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter& filters){
-    SQLBuilder qb("SELECT id, username, picture, email, created_at, updated_at FROM users");
+    std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
+    SQLBuilder qb("users");
+    qb.select(fields);
     if (filters.id.has_value()) {
         qb.where("id", filters.id.value_or(0));
     }
@@ -60,9 +62,14 @@ net::awaitable<void> UsersRepository::create(UserEntity& entity) {
     params.emplace_back(entity.username);
     params.emplace_back(entity.email);
     params.emplace_back(entity.password);
+
+    std::vector<std::string> fields{ "username", "email", "password" };
+    SQLBuilder qb("users");
+    qb.insert(fields);
+    qb.returning("id");
+
     auto result = co_await pool_->query(
-        "INSERT INTO users (username, email, password) "
-        "VALUES ($1,$2,$3) RETURNING id;",
+        qb.str(),
         params,
         std::chrono::seconds(5)
     );
