@@ -1,12 +1,13 @@
 .vs/
 out/
-build
-.vscode
-.idea
+build/
+build-local/
+.vscode/
+.idea/
 .DS_Store
 *.swp
 .env
 uploads/
 src/media/
 CMakeSettings.json
-.vscode/
+cmake-build-debug/
