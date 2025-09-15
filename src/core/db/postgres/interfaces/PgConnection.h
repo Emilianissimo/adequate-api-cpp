@@ -31,12 +31,12 @@ public:
         std::chrono::steady_clock::duration timeout
     );
 
-    // Transactions
+    /// Transactions
     net::awaitable<void> begin(std::chrono::steady_clock::duration timeout);
     net::awaitable<void> commit(std::chrono::steady_clock::duration timeout);
     net::awaitable<void> rollback(std::chrono::steady_clock::duration timeout);
 
-    bool healthy() const noexcept;
+    [[nodiscard]] bool healthy() const noexcept;
 
 private:
     net::any_io_executor executor_;
@@ -55,6 +55,6 @@ private:
         std::chrono::steady_clock::duration timeout
     );
 
-    static PgResult buildResult(PGresult* r);
-    void cancel() noexcept; // best-effort PQcancel
+    static PgResult buildResult(const PGresult* r);
+    void cancel() const noexcept; // best-effort PQcancel
 };

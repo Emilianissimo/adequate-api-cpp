@@ -60,7 +60,6 @@ public:
         this->params_.emplace_back(arrayToPg(values));
     }
 
-    // LIMIT / OFFSET
     void limit(std::optional<std::size_t> n) {
         if (!n) return;
         this->sql_ += " LIMIT $" + std::to_string(nextIndex()) + "::int";
@@ -77,12 +76,12 @@ public:
         this->sql_ += " ORDER BY " + fieldName;
     }
 
-    // SQL
-    std::string str() const {
+    /// SQL
+    [[nodiscard]] std::string str() const {
         return this->sql_;
     }
 
-    const std::vector<std::optional<std::string>>& params() const {
+    [[nodiscard]] const std::vector<std::optional<std::string>>& params() const {
         return this->params_;
     }
 

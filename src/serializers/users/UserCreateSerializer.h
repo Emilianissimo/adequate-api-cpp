@@ -13,7 +13,7 @@ class UserCreateResponseSerializer final : public BaseSerializer<UserCreateRespo
 public:
     UserCreateResponseSerializer() = default;
 
-    std::int64_t id;
+    std::int64_t id{};
     std::string username;
     std::string email;
 

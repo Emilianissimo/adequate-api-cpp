@@ -1,6 +1,5 @@
 #pragma once
 #include <chrono>
-#include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -11,7 +10,6 @@ using time_point = std::chrono::system_clock::time_point;
 /// Parse PostgreSQL timestamp (with optional fractional seconds) into chrono::time_point (UTC)
 inline time_point parse_pg_timestamp(const std::string& s) {
     std::tm tm{};
-    char dot = 0;
     int micros = 0;
 
     std::istringstream iss(s);
@@ -22,9 +20,10 @@ inline time_point parse_pg_timestamp(const std::string& s) {
 
     // fractional seconds, e.g. .123456
     if (iss.peek() == '.') {
+        char dot = 0;
         iss >> dot >> micros;
         // pad micros to microseconds
-        int digits = std::to_string(micros).size();
+        const int digits = std::to_string(micros).size();
         for (int i = digits; i < 6; i++) {
             micros *= 10;
         }
@@ -34,7 +33,7 @@ inline time_point parse_pg_timestamp(const std::string& s) {
 #if defined(_WIN32)
     std::time_t tt = _mkgmtime(&tm);
 #else
-    std::time_t tt = timegm(&tm); // GNU extension
+    const std::time_t tt = timegm(&tm); // GNU extension
 #endif
     auto tp = std::chrono::system_clock::from_time_t(tt);
     tp += std::chrono::microseconds(micros);
@@ -45,7 +44,7 @@ inline time_point parse_pg_timestamp(const std::string& s) {
 inline std::string to_iso_string(const time_point& tp) {
     using namespace std::chrono;
 
-    auto s = time_point_cast<seconds>(tp);
+    const auto s = time_point_cast<seconds>(tp);
     auto subseconds = duration_cast<microseconds>(tp - s).count();
 
     std::time_t t = system_clock::to_time_t(s);

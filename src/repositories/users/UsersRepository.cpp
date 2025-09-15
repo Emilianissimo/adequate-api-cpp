@@ -3,8 +3,8 @@
 #include "core/db/postgres/builder/SQLBuilder.h"
 #include "core/loggers/LoggerSingleton.h"
 
-net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter& filters){
-    std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
+net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter& filters) const {
+    const std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
     SQLBuilder qb("users");
     qb.select(fields);
     if (filters.id.has_value()) {
@@ -32,7 +32,7 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter
         qb.limit(filters.offset.value());
     }
 
-    auto result = co_await pool_->query(
+    PgResult result = co_await pool_->query(
         qb.str(),
         qb.params(),
         std::chrono::seconds(5)
@@ -41,23 +41,23 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter
     std::vector<UserEntity> users;
     users.reserve(result.rows.size());
 
-    for (auto& row : result.rows) {
+    for (auto&[columns] : result.rows) {
         UserEntity user;
-        user.id = std::stoll(row.columns[0].data);
-        user.username = row.columns[1].data;
-        user.picture = row.columns[2].is_null
+        user.id = std::stoll(columns[0].data);
+        user.username = columns[1].data;
+        user.picture = columns[2].is_null
             ? std::nullopt
-            : std::make_optional(row.columns[2].data);
-        user.email = row.columns[3].data;
-        user.created_at = parse_pg_timestamp(row.columns[4].data);
-        user.updated_at = parse_pg_timestamp(row.columns[5].data);
+            : std::make_optional(columns[2].data);
+        user.email = columns[3].data;
+        user.created_at = parse_pg_timestamp(columns[4].data);
+        user.updated_at = parse_pg_timestamp(columns[5].data);
         users.push_back(std::move(user));
     }
 
     co_return users;
 }
 
-net::awaitable<void> UsersRepository::create(UserEntity& entity) {
+net::awaitable<void> UsersRepository::create(UserEntity& entity) const {
     std::vector<std::optional<std::string>> params;
     params.emplace_back(entity.username);
     params.emplace_back(entity.email);

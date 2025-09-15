@@ -10,5 +10,5 @@ inline Router::RouteFn bind_handler(C* obj, Method m) {
 }
 
 namespace app {
-    void define_routes(Router& router, const std::shared_ptr<AppContext> ctx);
+    void define_routes(Router& router, const std::shared_ptr<AppContext>& ctx);
 }

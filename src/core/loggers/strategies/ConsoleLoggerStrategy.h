@@ -5,12 +5,12 @@
 #include <iomanip>
 #include <boost/algorithm/string/join.hpp>
 
-class ConsoleLoggerStrategy : public LoggerInterface {
+class ConsoleLoggerStrategy final : public LoggerInterface {
 public:
     void log(LogLevel level, const std::string& msg, const std::optional<std::map<std::string, std::any>>& params) override {
-        auto now = std::chrono::system_clock::now();
-        auto t   = std::chrono::system_clock::to_time_t(now);
-        std::tm tm = *std::localtime(&t);
+        const auto now = std::chrono::system_clock::now();
+        const auto t   = std::chrono::system_clock::to_time_t(now);
+        const std::tm tm = *std::localtime(&t);
 
         std::ostringstream oss;
         oss << "[" << std::put_time(&tm, "%F %T") << "] " << levelToString(level) << ": " << msg;
@@ -51,7 +51,7 @@ public:
     }
 
 private:
-    static std::string levelToString(LogLevel level) {
+    static std::string levelToString(const LogLevel level) {
         switch (level) {
             case LogLevel::DEBUG: return "DEBUG";
             case LogLevel::INFO:  return "INFO";

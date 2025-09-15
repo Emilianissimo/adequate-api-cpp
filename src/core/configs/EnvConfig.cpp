@@ -1,5 +1,4 @@
 #include "core/configs/EnvConfig.h"
-#include <cstdlib>
 #include <stdexcept>
 
 static std::string getEnvOrDefault(const char* key, const std::string& default_ = "") 

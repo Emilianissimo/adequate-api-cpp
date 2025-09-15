@@ -11,7 +11,7 @@ class UserSerializer final : public BaseSerializer<UserSerializer, UserEntity> {
 public:
     UserSerializer() = default;
 
-    std::int64_t id;
+    std::int64_t id{};
     std::string username;
     std::string email;
     std::optional<std::string> picture;

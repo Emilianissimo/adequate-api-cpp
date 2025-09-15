@@ -5,9 +5,9 @@
 
 struct Transaction {
     PgPool::Lease Lease;
-    std::chrono::steady_clock::duration timeout;
+    std::chrono::steady_clock::duration timeout{};
     
     static net::awaitable<Transaction> begin(PgPool& pool, std::chrono::steady_clock::duration timeout);
-    net::awaitable<void> commit();
-    net::awaitable<void> rollback();
+    net::awaitable<void> commit() const;
+    net::awaitable<void> rollback() const;
 };

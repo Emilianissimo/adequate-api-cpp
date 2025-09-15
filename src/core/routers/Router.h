@@ -25,8 +25,10 @@ public:
     Router& patch(std::string path, RouteFn fn) { return add(http::verb::patch, std::move(path), std::move(fn)); };
     Router& delete_(std::string path, RouteFn fn) { return add(http::verb::delete_, std::move(path), std::move(fn)); };
 
-    Router& use(std::shared_ptr<MiddlewareInterface> middleware); // Use globally
-    Router& use(std::string pathPrefix, std::shared_ptr<MiddlewareInterface> middleware); // Use locally (scoped)
+    /// Use globally
+    Router& use(std::shared_ptr<MiddlewareInterface> middleware);
+    /// Use locally (scoped)
+    Router& use(std::string pathPrefix, std::shared_ptr<MiddlewareInterface> middleware);
 
     net::awaitable<Response> dispatch(Request& request) const;
 
@@ -43,7 +45,7 @@ private:
     struct ScopedMiddlewares { std::string prefix; std::shared_ptr<MiddlewareInterface> middleware; };
     std::vector<ScopedMiddlewares> scoped_middlewares_;
 
-    std::vector<std::shared_ptr<MiddlewareInterface>> collectMiddlewaresFor(const std::string& path) const;
+    [[nodiscard]] std::vector<std::shared_ptr<MiddlewareInterface>> collectMiddlewaresFor(const std::string& path) const;
 
     static std::string normalizeTarget(const Request& request);
     static Outcome make404(const Request& request);
@@ -51,8 +53,8 @@ private:
     static Outcome make500(const Request& request, std::string& err);
     static Outcome makeOptionsAllow(const Request& request, const MethodMap& mm);
 
-    net::awaitable<Outcome> runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const;
-    Response render(const Request& req, Outcome&& outcome) const;
-    net::awaitable<Response> runAfter(const Request& req, Response&& res, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const;
+    static net::awaitable<Outcome> runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) ;
+    static Response render(const Request& request, Outcome&& outcome) ;
+    static net::awaitable<Response> runAfter(const Request& request, Response&& response, const std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) ;
     static RouteEntry compileRoute(const std::string& tmpl);
 };

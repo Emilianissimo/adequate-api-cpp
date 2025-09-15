@@ -1,7 +1,6 @@
 #pragma once
 #include <optional>
 #include <string>
-#include <cstdint>
 #include "core/interfaces/EntityInterface.h"
 
 struct UserEntity : public EntityInterface {

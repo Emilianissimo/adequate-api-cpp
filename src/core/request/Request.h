@@ -14,13 +14,13 @@ public:
 
     explicit Request(RawRequest req) : req_(std::move(req)) {}
 
-    const RawRequest& raw() const { return req_; }
+    [[nodiscard]] const RawRequest& raw() const { return req_; }
     RawRequest& raw() { return req_; }
 
-    const std::string& body() const { return req_.body(); }
+    [[nodiscard]] const std::string& body() const { return req_.body(); }
 
 
-    std::unordered_map<std::string, std::string> query() const {
+    [[nodiscard]] std::unordered_map<std::string, std::string> query() const {
         std::unordered_map<std::string, std::string> params;
         
         boost::urls::url_view url_view_(this->target());
@@ -30,7 +30,7 @@ public:
         return params;
     }
 
-    nlohmann::json json() const {
+    [[nodiscard]] nlohmann::json json() const {
         try {
             return nlohmann::json::parse(req_.body());
         } catch (const std::exception& e) {
@@ -38,15 +38,15 @@ public:
         }
     }
 
-    const auto& headers() const { return req_; }
+    [[nodiscard]] const auto& headers() const { return req_; }
 
-    http::verb method() const { return req_.method(); }
+    [[nodiscard]] http::verb method() const { return req_.method(); }
 
-    inline unsigned int version() const { return req_.version(); };
+    [[nodiscard]] inline unsigned int version() const { return req_.version(); };
 
-    std::string target() const { return std::string(req_.target()); }
+    [[nodiscard]] std::string target() const { return std::string(req_.target()); }
 
-    inline bool keep_alive() const { return req_.keep_alive(); };
+    [[nodiscard]] inline bool keep_alive() const { return req_.keep_alive(); };
 
 private:
     RawRequest req_;

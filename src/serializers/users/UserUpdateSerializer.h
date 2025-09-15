@@ -1,3 +1,4 @@
+#pragma once
 #include "core/errors/Errors.h"
 #include "entities/UserEntity.h"
 #include "core/serializers/BaseSerializer.h"
@@ -8,13 +9,13 @@ class UserUpdateSerializer final : public BaseSerializer<UserUpdateSerializer, U
 public:
     UserUpdateSerializer() = default;
 
-    std::int64_t id;
+    std::int64_t id{};
     std::optional<std::string> username;
     std::optional<std::string> picture;
     std::optional<std::string> email;
     std::optional<std::string> password;
 
-    UserEntity toEntity() {
+    [[nodiscard]] UserEntity toEntity() const {
         LoggerSingleton::get().info("UserUpdateSerializer::toEntity: started");
         UserEntity userEntity;
         userEntity.id = this->id;
@@ -62,8 +63,7 @@ public:
 
         LoggerSingleton::get().debug("UserUpdateSerializer::from_json: checking picture");
         if (j.contains("picture") && j["picture"].is_string()) {
-            auto pic = j["picture"].get<std::string>();
-            if (!pic.empty()) {
+            if (auto pic = j["picture"].get<std::string>(); !pic.empty()) {
                 s.picture = pic;
             }
         }

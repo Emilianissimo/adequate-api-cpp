@@ -16,18 +16,18 @@ inline DbErrorCode map_sqlstate(const std::string& state) {
     return DbErrorCode::Unknown;
 }
 
-class DbError : public std::runtime_error {
+class DbError final : public std::runtime_error {
 public:
-    explicit DbError(DbErrorCode code, std::string msg)
-        : std::runtime_error(std::move(msg)), code_(code) {}
+    explicit DbError(const DbErrorCode code, const std::string& msg)
+        : std::runtime_error(msg), code_(code) {}
 
-    DbErrorCode code() const noexcept { return code_; }
+    [[nodiscard]] DbErrorCode code() const noexcept { return code_; }
 
 private:
     DbErrorCode code_;
 };
 
-class ValidationError : public std::runtime_error {
+class ValidationError final : public std::runtime_error {
 public:
     explicit ValidationError(const std::string& message)
         : std::runtime_error(message) {}

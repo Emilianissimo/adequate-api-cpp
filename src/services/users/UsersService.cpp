@@ -37,7 +37,7 @@ public:
         co_return serializedUsers;
     }
 
-    virtual net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer& data) override {
+    net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer& data) override {
         LoggerSingleton::get().info("UsersService::create: called", {
             {"email", data.email},
             {"password", data.password},
@@ -66,7 +66,7 @@ public:
         }
     }
 
-    virtual net::awaitable<void> update(UserUpdateSerializer& data) override
+    net::awaitable<void> update(UserUpdateSerializer& data) override
     {
         LoggerSingleton::get().info("UsersService::update: called", {
             {"id", data.id},
@@ -90,7 +90,7 @@ public:
 
         try
         {
-            co_await repo_.update(user);
+            co_await UsersRepository::update(user);
             co_return;
         } catch (const DbError& e)
         {

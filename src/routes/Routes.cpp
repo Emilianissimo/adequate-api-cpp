@@ -3,7 +3,7 @@
 #include "controllers/UsersController.h"
 
 namespace app{
-    void define_routes(Router& router, const std::shared_ptr<AppContext> ctx){
+    void define_routes(Router& router, const std::shared_ptr<AppContext>& ctx){
         // Middlewares
         // router.use(std::make_shared<RequestIdMiddleware>());
         // router.use(std::make_shared<LoggingMiddleware>());

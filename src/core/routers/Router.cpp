@@ -4,6 +4,7 @@
 #include <boost/beast/http.hpp>
 #include "core/loggers/LoggerSingleton.h"
 #include <algorithm>
+#include <ranges>
 #include <sstream>
 #include <type_traits>
 
@@ -27,8 +28,8 @@ Router& Router::use(std::shared_ptr<MiddlewareInterface> middleware) {
     return *this;
 }
 
-Router& Router::use(std::string prefix, std::shared_ptr<MiddlewareInterface> mw) {
-    scoped_middlewares_.push_back({std::move(prefix), std::move(mw)});
+Router& Router::use(std::string pathPrefix, std::shared_ptr<MiddlewareInterface> middleware) {
+    scoped_middlewares_.push_back({std::move(pathPrefix), std::move(middleware)});
     return *this;
 }
 
@@ -54,34 +55,34 @@ static std::string buildAllowHeader(const Router::MethodMap& mm) {
         {http::verb::options, "OPTIONS"},
     };
     std::string allow;
-    for (auto& item : items) {
-        if (mm.count(item.verb)) {
+    for (const auto&[verb, name] : items) {
+        if (mm.contains(verb)) {
             if (!allow.empty()) allow += ", ";
-            allow += item.name;
+            allow += name;
         }
     }
     return allow;
 }
 
 Outcome Router::make404(const Request& request) {
-    JsonResult result{json{{"error", "Not found"}}, http::status::not_found, false};
+    const JsonResult result{json{{"error", "Not found"}}, http::status::not_found, false};
     return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
 }
 
 Outcome Router::make405(const Request& request, const MethodMap& mm) {
-    JsonResult result{ json{{"error", "Method Not Allowed"}}, http::status::method_not_allowed, false };
+    const JsonResult result{ json{{"error", "Method Not Allowed"}}, http::status::method_not_allowed, false };
     Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
     tmp.set(http::field::allow, buildAllowHeader(mm));
     return tmp;
 }
 
 Outcome Router::make500(const Request& request, std::string& err) {
-    JsonResult result{json{{"error", err}}, http::status::internal_server_error, false};
+    const JsonResult result{json{{"error", err}}, http::status::internal_server_error, false};
     return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
 }
 
 Outcome Router::makeOptionsAllow(const Request& request, const MethodMap& mm) {
-    JsonResult result{ json{{"allow", buildAllowHeader(mm)}}, http::status::ok, true };
+    const JsonResult result{ json{{"allow", buildAllowHeader(mm)}}, http::status::ok, true };
     Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
     tmp.set(http::field::allow, buildAllowHeader(mm));
     return tmp;
@@ -94,7 +95,7 @@ std::string Router::normalizeTarget(const Request& request) {
     return target_path;
 }
 
-net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const {
+net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) {
     // Compiling chain of middleware to one next()
     using Next = MiddlewareInterface::Next;
     
@@ -102,9 +103,7 @@ net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf, std::ve
         co_return co_await leaf(r);
     };
 
-    // Оборачиваем в обратном порядке: последний mw близко к leaf
-    for (auto middleware = middlewares.rbegin(); middleware != middlewares.rend(); ++middleware) {
-        auto& middleware_ = *middleware;
+    for (auto & middleware_ : std::ranges::reverse_view(middlewares)) {
         Next prev = std::move(next);
         next = [middleware_, prev](Request& request_) -> net::awaitable<Outcome> {
             co_return co_await middleware_->handle(request_, prev);
@@ -114,7 +113,7 @@ net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf, std::ve
     co_return co_await next(request);
 }
 
-net::awaitable<Response> Router::runAfter(const Request& request, Response&& response, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const {
+net::awaitable<Response> Router::runAfter(const Request& request, Response&& response, const std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) {
     Response result = std::move(response);
     for (auto& middleware : middlewares) {
         result = co_await middleware->after(request, std::move(result));
@@ -122,11 +121,11 @@ net::awaitable<Response> Router::runAfter(const Request& request, Response&& res
     co_return result;
 }
 
-Response Router::render(const Request& request, Outcome&& outcome) const {
-    return std::visit([&](auto&& v) -> Response {
-        using T = std::decay_t<decltype(v)>;
+Response Router::render(const Request& request, Outcome&& outcome) {
+    return std::visit([&]<typename T0>(T0&& v) -> Response {
+        using T = std::decay_t<T0>;
         if constexpr (std::is_same_v<T, Response>) {
-            return std::move(v);
+            return std::forward<T0>(v);
         } else {
             return JsonRenderer::jsonResponse(
                 request,
@@ -146,7 +145,7 @@ Router::RouteEntry Router::compileRoute(const std::string& tmpl)
     auto escape_segment = [](const std::string& s) -> std::string {
         static const std::string specials = R"(\.^$|()[]{}*+?!)";
         std::string out; out.reserve(s.size()*2);
-        for (char c : s) {
+        for (const char c : s) {
             if (specials.find(c) != std::string::npos) out.push_back('\\');
             out.push_back(c);
         }
@@ -185,15 +184,14 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
     });
     int error_code = 0;
     std::string error_msg;
-    const auto path = this->normalizeTarget(request);
+    const auto path = Router::normalizeTarget(request);
 
     auto middlewares = collectMiddlewaresFor(path);
 
     const MethodMap* methods = nullptr;
     for (auto& entry : table_)
     {
-        std::smatch match;
-        if (std::regex_match(path, match, entry.regex))
+        if (std::smatch match; std::regex_match(path, match, entry.regex))
         {
             std::unordered_map<std::string, std::string> params;
             for (size_t i = 0; i < entry.paramNames.size(); ++i)
@@ -208,12 +206,12 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
     }
 
     if (!methods)
-        co_return co_await this->runAfter(request, this->render(request, this->make404(request)), middlewares);
+        co_return co_await Router::runAfter(request, Router::render(request, Router::make404(request)), middlewares);
 
     // Auto-HEAD: if no HEAD, but GET exists — return GET without body
-    if (request.method() == http::verb::head && !methods->count(http::verb::head) && methods->count(http::verb::get)) {
+    if (request.method() == http::verb::head && !methods->contains(http::verb::head) && methods->contains(http::verb::get)) {
         Outcome outcome = co_await runChain(request, methods->at(http::verb::get), middlewares);
-        Response response = this->render(request, std::move(outcome));
+        Response response = Router::render(request, std::move(outcome));
         response.body().clear();
         response.set(http::field::content_length, "0");
         for (auto& middleware : middlewares) {
@@ -224,19 +222,19 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
 
      // Auto-OPTIONS: if no OPTIONS — return Allow
     if (request.method() == http::verb::options && !methods->count(http::verb::options)) {
-        co_return co_await this->runAfter(request, this->render(request, this->makeOptionsAllow(request, *methods)), middlewares);
+        co_return co_await Router::runAfter(request, Router::render(request, Router::makeOptionsAllow(request, *methods)), middlewares);
     }
 
     auto itMeth = methods->find(request.method());
     if (itMeth == methods->end()) {
-        co_return co_await this->runAfter(request, this->render(request, this->make405(request, *methods)), middlewares);
+        co_return co_await Router::runAfter(request, Router::render(request, Router::make405(request, *methods)), middlewares);
     }
 
     try {
         auto fn = itMeth->second;
-        auto outcome = co_await this->runChain(request, itMeth->second, middlewares);
-        Response response = this->render(request, std::move(outcome));
-        co_return co_await this->runAfter(request, std::move(response), middlewares);
+        auto outcome = co_await Router::runChain(request, itMeth->second, middlewares);
+        Response response = Router::render(request, std::move(outcome));
+        co_return co_await Router::runAfter(request, std::move(response), middlewares);
     } catch (const DbError& e) {
         error_code = 500;
         error_msg = e.what() && *e.what() ? e.what() : "Database error";
@@ -245,18 +243,9 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
         error_msg = e.what() && *e.what() ? e.what() : "Unexpected error";
     }
 
-    if (error_code == 500) {
-        co_return co_await this->runAfter(
-            request,
-            this->render(request, this->make500(request, error_msg)),
-            middlewares
-        );
-    }
-
-    error_msg = "Unexpected error";
-    co_return co_await this->runAfter(
+    co_return co_await Router::runAfter(
         request,
-        this->render(request, this->make500(request, error_msg)),
+        Router::render(request, Router::make500(request, error_msg)),
         middlewares
     );
 }

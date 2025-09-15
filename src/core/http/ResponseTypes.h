@@ -16,13 +16,13 @@ struct JsonResult {
 
     JsonResult() = default;
 
-    // Universal constructor — auto json(T)
+    /// Universal constructor — auto json(T)
     template<class T>
-    JsonResult(
+    explicit JsonResult(
         T&& v,
         http::status s=http::status::ok,
-        bool ka=true,
-        int indent=-1
+        const bool ka=true,
+        const int indent=-1
     ) : body(nlohmann::json(std::forward<T>(v))), status(s), keepAlive(ka), dumpIndent(indent) {}
 };
 

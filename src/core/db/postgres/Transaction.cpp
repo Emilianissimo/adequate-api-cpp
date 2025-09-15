@@ -1,6 +1,6 @@
 #include "core/db/postgres/interfaces/Transaction.h"
 
-net::awaitable<Transaction> Transaction::begin(PgPool& pool, std::chrono::steady_clock::duration timeout) {
+net::awaitable<Transaction> Transaction::begin(PgPool& pool, const std::chrono::steady_clock::duration timeout) {
     auto lease = co_await pool.acquire();
     co_await lease.connection->begin(timeout);
     Transaction tx{
@@ -10,14 +10,14 @@ net::awaitable<Transaction> Transaction::begin(PgPool& pool, std::chrono::steady
     co_return tx;
 }
 
-net::awaitable<void> Transaction::commit() {
+net::awaitable<void> Transaction::commit() const {
     co_await Lease.connection->commit(timeout);
     // return to pool
     Lease.release();
     co_return;
 }
 
-net::awaitable<void> Transaction::rollback() {
+net::awaitable<void> Transaction::rollback() const {
     try {
         co_await Lease.connection->rollback(timeout);
     } catch (...) {

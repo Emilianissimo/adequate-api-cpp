@@ -3,7 +3,8 @@
 
 class BaseFilter : public FiltersInterface {
 public:
-    void parseRequestQuery(std::unordered_map<std::string, std::string> query) override = 0;
-    std::vector<std::int64_t> parseIds(const std::string& input);
-    std::vector<std::string> parseStrings(const std::string& input);
+    virtual void parseRequestQuery(std::unordered_map<std::string, std::string> query) = 0;
+
+    static std::vector<std::int64_t> parseIds(const std::string& input);
+    static std::vector<std::string> parseStrings(const std::string& input);
 };

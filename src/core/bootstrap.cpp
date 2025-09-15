@@ -11,7 +11,6 @@
 #include <boost/asio/signal_set.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <iostream>
-#include <thread>
 
 namespace beast = boost::beast;
 namespace http  = beast::http;
@@ -24,8 +23,8 @@ using net::use_awaitable;
 using RawRequest = http::request<http::string_body>;
 
 static awaitable<void> session(tcp::socket socket, Router& router) {
-    beast::flat_buffer buffer;
     try {
+        beast::flat_buffer buffer;
         for (;;) {
             RawRequest raw;
             co_await http::async_read(socket, buffer, raw, use_awaitable);
@@ -49,8 +48,8 @@ static awaitable<void> session(tcp::socket socket, Router& router) {
     co_return;
 }
 
-static awaitable<void> listener(const std::string host, uint16_t port, Router& router) {
-    auto exec = co_await net::this_coro::executor;
+static awaitable<void> listener(const std::string& host, const uint16_t port, Router& router) {
+    const auto exec = co_await net::this_coro::executor;
 
     tcp::endpoint ep{ net::ip::make_address(host), port };
     tcp::acceptor acc(exec, ep);

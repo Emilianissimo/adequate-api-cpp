@@ -7,25 +7,25 @@
 #include <unordered_set>
 
 namespace {
-    [[noreturn]] void throw_pg_error(PGconn* c, const char* what) {
+    [[noreturn]] void throw_pg_error(const PGconn* c, const char* what) {
         const char* em = c ? PQerrorMessage(c) : "No connection";
-        std::string message = std::string(what) + ": " + (em ? em : "Unknown error.");
+        const std::string message = std::string(what) + ": " + (em ? em : "Unknown error.");
         throw std::runtime_error(message);
     }
 
-    inline bool msg_contains(std::string_view hay, std::string_view needle) {
+    inline bool msg_contains(const std::string_view hay, const std::string_view needle) {
         return hay.find(needle) != std::string_view::npos;
     }
 
+    /// Postgres: SQLSTATE 42P05 duplicate_prepared_statement
     inline bool is_already_exists_error(std::string_view err) {
-        // Postgres: SQLSTATE 42P05 duplicate_prepared_statement
         return msg_contains(err, "42P05")
             || msg_contains(err, "duplicate_prepared_statement")
             || msg_contains(err, "already exists");
     }
 
+    /// Postgres: SQLSTATE 26000 invalid_sql_statement_name
     inline bool is_invalid_prepared_stmt_error(std::string_view err) {
-        // Postgres: SQLSTATE 26000 invalid_sql_statement_name
         return msg_contains(err, "26000")
             || msg_contains(err, "invalid prepared statement")
             || msg_contains(err, "invalid_sql_statement_name");
@@ -38,7 +38,7 @@ PgConnection::PgConnection(net::any_io_executor executor, std::string dsn)
 
 PgConnection::~PgConnection() { close(); }
 
-PgResult PgConnection::buildResult(PGresult* result){
+PgResult PgConnection::buildResult(const PGresult* result){
     if (!result) return {};
     PgResult out;
 
@@ -99,10 +99,10 @@ net::awaitable<void> PgConnection::connect() {
 
         // wait for IO readiness
         if (st == PGRES_POLLING_READING) {
-            auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
             co_await wait_readable(deadline);
         } else if (st == PGRES_POLLING_WRITING) {
-            auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
             co_await wait_writable(deadline);
         } else {
             // continue
@@ -116,7 +116,7 @@ net::awaitable<void> PgConnection::connect() {
 net::awaitable<bool> PgConnection::ping() {
     try {
         co_await ensure_connected();
-        auto result = co_await execParams("SELECT 1", {}, std::chrono::seconds(3));
+        const auto result = co_await execParams("SELECT 1", {}, std::chrono::seconds(3));
         // cheap round-trip
         (void)result;
         co_return true;
@@ -125,28 +125,28 @@ net::awaitable<bool> PgConnection::ping() {
     }
 }
 
-net::awaitable<void> PgConnection::begin(std::chrono::steady_clock::duration timeout) {
-    auto r = co_await execParams("BEGIN", {}, timeout);
+net::awaitable<void> PgConnection::begin(const std::chrono::steady_clock::duration timeout) {
+    const auto r = co_await execParams("BEGIN", {}, timeout);
     (void)r;
     co_return;
 }
 
-net::awaitable<void> PgConnection::commit(std::chrono::steady_clock::duration timeout) {
-    auto r = co_await execParams("COMMIT", {}, timeout);
+net::awaitable<void> PgConnection::commit(const std::chrono::steady_clock::duration timeout) {
+    const auto r = co_await execParams("COMMIT", {}, timeout);
     (void)r;
     co_return;
 }
 
-net::awaitable<void> PgConnection::rollback(std::chrono::steady_clock::duration timeout) {
-    auto r = co_await execParams("ROLLBACK", {}, timeout);
+net::awaitable<void> PgConnection::rollback(const std::chrono::steady_clock::duration timeout) {
+    const auto r = co_await execParams("ROLLBACK", {}, timeout);
     (void)r;
     co_return;
 }
 
 net::awaitable<PgResult> PgConnection::execParams(
-    std::string_view sql,
+    const std::string_view sql,
     const std::vector<std::optional<std::string>>& params,
-    std::chrono::steady_clock::duration timeout
+    const std::chrono::steady_clock::duration timeout
 ) {
     co_await ensure_connected();
 
@@ -181,10 +181,10 @@ net::awaitable<PgResult> PgConnection::execParams(
 }
 
 net::awaitable<PgResult> PgConnection::execPrepared(
-    std::string_view stmtName,
-    std::string_view sqlIfPrepareNeeded,
+    const std::string_view stmtName,
+    const std::string_view sqlIfPrepareNeeded,
     const std::vector<std::optional<std::string>>& params,
-    std::chrono::steady_clock::duration timeout
+    const std::chrono::steady_clock::duration timeout
 ) {
     co_await ensure_connected();
 
@@ -193,7 +193,7 @@ net::awaitable<PgResult> PgConnection::execPrepared(
     const std::string sql_if_needed(sqlIfPrepareNeeded);
 
     auto do_prepare = [&]() -> net::awaitable<void>{
-        if (prepared_.count(name)) co_return;
+        if (prepared_.contains(name)) co_return;
 
         auto send_prepare = [&]() -> int {
             return PQsendPrepare(
@@ -300,7 +300,7 @@ void PgConnection::close() {
     }
 }
 
-void PgConnection::cancel() noexcept {
+void PgConnection::cancel() const noexcept {
     if (!conn_) return;
     char errbuf[256] = {0};
     if (auto* c = PQgetCancel(conn_)) {
@@ -309,7 +309,7 @@ void PgConnection::cancel() noexcept {
     }
 }
 
-net::awaitable<void> PgConnection::wait_readable(std::chrono::steady_clock::time_point deadline) {
+net::awaitable<void> PgConnection::wait_readable(const std::chrono::steady_clock::time_point deadline) {
     if (!stream_descriptor_.has_value()) co_return;
 
     net::steady_timer timer(executor_);
@@ -343,7 +343,7 @@ net::awaitable<void> PgConnection::wait_readable(std::chrono::steady_clock::time
     co_return;
 }
 
-net::awaitable<void> PgConnection::wait_writable(std::chrono::steady_clock::time_point deadline) {
+net::awaitable<void> PgConnection::wait_writable(const std::chrono::steady_clock::time_point deadline) {
     if (!stream_descriptor_.has_value()) co_return;
 
     net::steady_timer timer(executor_);
@@ -376,8 +376,8 @@ net::awaitable<void> PgConnection::wait_writable(std::chrono::steady_clock::time
 }
 
 net::awaitable<PgResult> PgConnection::runQueryWithTimeout(
-    std::function<int()> sendFn,
-    std::chrono::steady_clock::duration timeout
+    const std::function<int()> sendFn,
+    const std::chrono::steady_clock::duration timeout
 ) {
     auto deadline = std::chrono::steady_clock::now() + timeout;
 

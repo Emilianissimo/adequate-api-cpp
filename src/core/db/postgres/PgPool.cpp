@@ -2,13 +2,12 @@
 #include "core/db/postgres/interfaces/PgConnection.h"
 
 #include <boost/asio/as_tuple.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include <deque>
 #include <stdexcept>
 
 namespace net = boost::asio;
 
-PgPool::PgPool(net::any_io_executor executor, std::string dsn, std::size_t size)
+PgPool::PgPool(net::any_io_executor executor, std::string dsn, const std::size_t size)
     : executor_(std::move(executor))
     , strand_(net::make_strand(executor_))
     , dsn_(std::move(dsn))
@@ -47,7 +46,7 @@ void PgPool::shutdown() {
 net::awaitable<PgResult> PgPool::query(
     const std::string_view sql,
     const std::vector<std::optional<std::string>>& params,
-    std::chrono::steady_clock::duration timeout
+    const std::chrono::steady_clock::duration timeout
 ) {
     auto [connection, release] = co_await acquire();
     try {

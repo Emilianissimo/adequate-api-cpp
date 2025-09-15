@@ -1,5 +1,8 @@
 #pragma once
 #include <string>
+#include <optional>
+#include <map>
+#include <any>
 
 enum class LogLevel { DEBUG, INFO, WARN, ERR };
 

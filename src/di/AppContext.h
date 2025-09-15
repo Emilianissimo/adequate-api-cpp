@@ -3,10 +3,10 @@
 #include "core/db/postgres/interfaces/PgPool.h"
 
 #include "controllers/HealthController.h"
-// Users
+/// Users
+#include "controllers/UsersController.h"
 #include "repositories/users/UsersRepository.h"
 #include "services/users/UsersServiceInterface.h"
-#include "controllers/UsersController.h"
 
 struct AppContext {
     std::shared_ptr<PgPool> pg;

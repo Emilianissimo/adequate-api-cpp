@@ -20,7 +20,7 @@ public:
             this->offset = std::stoull(query["offset"]);
         }
         if (query.contains("username__in")) {
-            this->username__in = this->parseStrings(query["username__in"]);
+            this->username__in = UserListFilter::parseStrings(query["username__in"]);
         }
         if (query.contains("username")) {
             this->username = query["username"];
@@ -29,7 +29,7 @@ public:
             this->username = query["email"];
         }
         if (query.contains("id__in")) {
-            this->id__in = this->parseIds(query["id__in"]);
+            this->id__in = UserListFilter::parseIds(query["id__in"]);
         }
         if (query.contains("id")) {
             this->id = std::stoull(query["id"]);

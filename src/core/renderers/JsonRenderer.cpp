@@ -21,13 +21,13 @@ Response JsonRenderer::jsonResponse(
 Response JsonRenderer::jsonError(
     const Request& request,
     http::status status,
-    std::string_view text,
+    std::string_view message,
     bool keepAlive,
     int dumpIndent
 )
 {
-    json body = {
-        {"error", std::string(text)},
+    const json body = {
+        {"error", std::string(message)},
         {"status", static_cast<int>(status)}
     };
     return jsonResponse(request, status, body, keepAlive, dumpIndent);
