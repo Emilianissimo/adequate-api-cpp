@@ -8,4 +8,5 @@ public:
     using BaseRepository::BaseRepository;
     net::awaitable<std::vector<UserEntity>> get_list(UserListFilter& filters);
     net::awaitable<void> create(UserEntity& entity);
+    net::awaitable<void> update(UserEntity& entity);
 };

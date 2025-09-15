@@ -3,8 +3,8 @@
 #include <sstream>
 #include <cstdint>
 
-std::vector<std::uint64_t> BaseFilter::parseIds(const std::string& input){
-    std::vector<std::uint64_t> out;
+std::vector<std::int64_t> BaseFilter::parseIds(const std::string& input){
+    std::vector<std::int64_t> out;
     std::istringstream ss(input);
     std::string token;
     while (std::getline(ss, token, ',')) {

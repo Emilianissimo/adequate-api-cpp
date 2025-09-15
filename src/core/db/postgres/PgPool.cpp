@@ -16,12 +16,12 @@ PgPool::PgPool(net::any_io_executor executor, std::string dsn, std::size_t size)
     , channel_(strand_, /*capacity*/ static_cast<unsigned>(size ? size : 1)) {}
 
 net::awaitable<PgPool::Lease> PgPool::acquire() {
-    auto conn = co_await make_or_wait();
+    const std::shared_ptr<PgConnection> conn = co_await make_or_wait();
     // RAII release closure
     Lease lease{
         conn,
         [this, weak = std::weak_ptr<PgConnection>(conn)]() {
-            if (auto c = weak.lock()) {
+            if (const std::shared_ptr<PgConnection> c = weak.lock()) {
                 this->release(c);
             }
         }
@@ -37,7 +37,7 @@ void PgPool::shutdown() {
         } else {
             created_at_ = 0;
         }
-        for (auto& c : idle_) {
+        for (std::shared_ptr<PgConnection>& c : idle_) {
             c.reset(); // dtor PgConnection → PQfinish
         }
         idle_.clear();
@@ -45,18 +45,18 @@ void PgPool::shutdown() {
 }
 
 net::awaitable<PgResult> PgPool::query(
-    std::string_view sql,
+    const std::string_view sql,
     const std::vector<std::optional<std::string>>& params,
     std::chrono::steady_clock::duration timeout
 ) {
-    auto lease = co_await acquire();
+    auto [connection, release] = co_await acquire();
     try {
-        auto res = co_await lease.connection->execParams(sql, params, timeout);
-        lease.release();
+        auto res = co_await connection->execParams(sql, params, timeout);
+        release();
         co_return res;
     } catch (...) {
         // if connection is broken, drop it (release() will health-check)
-        lease.release();
+        release();
         throw;
     }
 }
@@ -71,14 +71,14 @@ net::awaitable<std::shared_ptr<PgConnection>> PgPool::make_or_wait() {
 
     // 1) Reuse idle if any
     if (!idle_.empty()) {
-        auto c = idle_.back();
+        std::shared_ptr<PgConnection> c = idle_.back();
         idle_.pop_back();
         co_return c;
     }
 
     // 2) Create new if capacity allows
     if (created_at_ < size_) {
-        auto c = std::make_shared<PgConnection>(executor_, dsn_);
+        std::shared_ptr<PgConnection> c = std::make_shared<PgConnection>(executor_, dsn_);
         ++created_at_;
         // connect now (may throw)
         co_await c->connect();
@@ -86,12 +86,12 @@ net::awaitable<std::shared_ptr<PgConnection>> PgPool::make_or_wait() {
     }
 
     // 3) Wait on channel for a returned connection
-    auto tup = co_await channel_.async_receive(
+    const std::tuple<std::error_code, std::shared_ptr<PgConnection>> tup = co_await channel_.async_receive(
         net::as_tuple(net::use_awaitable_t<net::any_io_executor>{})
     );
 
-    auto ec  = std::get<0>(tup);
-    auto got = std::get<1>(tup);
+    std::error_code ec  = std::get<0>(tup);
+    std::shared_ptr<PgConnection> got = std::get<1>(tup);
 
     if (ec) {
         throw boost::system::system_error(ec);

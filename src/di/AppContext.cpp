@@ -1,6 +1,7 @@
 #include "di/AppContext.h"
 #include <stdexcept>
 #include <atomic>
+#include "services/users/UsersService.cpp"
 
 namespace {
     std::shared_ptr<AppContext> g_ctx;
@@ -14,7 +15,7 @@ void appctx::init(std::shared_ptr<AppContext> ctx) {
     g_inited.store(true);
 }
 
-void appctx::wire(std::shared_ptr<AppContext> ctx) {
+void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);
     ctx->usersService = std::make_unique<UsersService>(*ctx->usersRepository);
     ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);

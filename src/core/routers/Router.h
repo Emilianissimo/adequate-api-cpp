@@ -8,6 +8,7 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <regex>
 
 class Router {
 public:
@@ -30,7 +31,13 @@ public:
     net::awaitable<Response> dispatch(Request& request) const;
 
 private:
-    std::unordered_map<std::string, MethodMap> table_;
+    struct RouteEntry {
+        std::regex regex;
+        std::vector<std::string> paramNames;
+        MethodMap methods;
+        std::string original;
+    };
+    std::vector<RouteEntry> table_;
 
     std::vector<std::shared_ptr<MiddlewareInterface>> global_middlewares_;
     struct ScopedMiddlewares { std::string prefix; std::shared_ptr<MiddlewareInterface> middleware; };
@@ -47,4 +54,5 @@ private:
     net::awaitable<Outcome> runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const;
     Response render(const Request& req, Outcome&& outcome) const;
     net::awaitable<Response> runAfter(const Request& req, Response&& res, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) const;
+    static RouteEntry compileRoute(const std::string& tmpl);
 };

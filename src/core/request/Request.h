@@ -8,6 +8,8 @@ namespace http = boost::beast::http;
 
 class Request {
 public:
+    std::unordered_map<std::string, std::string> path_params;
+
     using RawRequest = http::request<http::string_body>;
 
     explicit Request(RawRequest req) : req_(std::move(req)) {}

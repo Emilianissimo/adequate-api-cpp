@@ -2,10 +2,10 @@
 #include <iostream>
 #include "core/filters/BaseFilter.h"
 
-class UserListFilter : public BaseFilter {
+class UserListFilter final : public BaseFilter {
 public:
-    std::optional<std::uint64_t> id;
-    std::optional<std::vector<std::uint64_t>> id__in;
+    std::optional<std::int64_t> id;
+    std::optional<std::vector<std::int64_t>> id__in;
     std::optional<std::string> username;
     std::optional<std::vector<std::string>> username__in;
     std::optional<std::string> email;

@@ -7,7 +7,6 @@
 #include "core/errors/Errors.h"
 #include "entities/UserEntity.h"
 #include "core/serializers/BaseSerializer.h"
-#include "helpers/DatetimeConverter.h"
 #include "core/loggers/LoggerSingleton.h"
 
 class UserCreateResponseSerializer final : public BaseSerializer<UserCreateResponseSerializer, UserEntity> {
@@ -22,11 +21,12 @@ public:
         LoggerSingleton::get().info("UserCreateResponseSerializer::fromEntity: started");
         UserCreateResponseSerializer serialized;
         serialized.id = entity.id;
-        serialized.username = entity.username;
-        serialized.email = entity.email;
+        serialized.username = entity.username.value();
+        serialized.email = entity.email.value();
         return serialized;
     }
 
+    /// Covering to_json / from_json declarative way
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserCreateResponseSerializer, id, username, email)
 };
 
@@ -41,9 +41,9 @@ public:
     static UserCreateSerializer fromEntity(const UserEntity& entity) {
         LoggerSingleton::get().info("UserCreateSerializer::fromEntity: started");
         UserCreateSerializer serializer;
-        serializer.username = entity.username;
-        serializer.email = entity.email;
-        serializer.password = entity.password;
+        serializer.username = entity.username.value();
+        serializer.email = entity.email.value();
+        serializer.password = entity.password.value();
         return serializer;
     }
 
@@ -57,11 +57,9 @@ public:
     }
 
     friend void from_json(const nlohmann::json& j, UserCreateSerializer& s) {
-        std::ostringstream ss;
-        //TODO: Clean password value from json to log
-        ss << "UserCreateSerializer::from_json: called, " << "json=" << j;
-        LoggerSingleton::get().info(ss.str());
-        ss.clear();
+        LoggerSingleton::get().debug("UserCreateSerializer::from_json: called", {
+            {"json", j.dump()},
+        });
 
         LoggerSingleton::get().debug(
             std::string("UserCreateSerializer::from_json: checking username: ") +

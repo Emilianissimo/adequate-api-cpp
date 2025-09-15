@@ -5,7 +5,7 @@
 #include "controllers/HealthController.h"
 // Users
 #include "repositories/users/UsersRepository.h"
-#include "services/users/UsersService.cpp"
+#include "services/users/UsersServiceInterface.h"
 #include "controllers/UsersController.h"
 
 struct AppContext {
@@ -21,7 +21,7 @@ struct AppContext {
 
 namespace appctx {
     void init(std::shared_ptr<AppContext> ctx);
-    void wire(std::shared_ptr<AppContext> ctx);
+    void wire(const std::shared_ptr<AppContext>& ctx);
 
     AppContext& get();
 };

@@ -1,6 +1,7 @@
 #include "repositories/users/UsersRepository.h"
 #include "helpers/DatetimeConverter.h"
 #include "core/db/postgres/builder/SQLBuilder.h"
+#include "core/loggers/LoggerSingleton.h"
 
 net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter& filters){
     std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
@@ -58,7 +59,6 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter
 
 net::awaitable<void> UsersRepository::create(UserEntity& entity) {
     std::vector<std::optional<std::string>> params;
-    // Password should be encrypted in service
     params.emplace_back(entity.username);
     params.emplace_back(entity.email);
     params.emplace_back(entity.password);
@@ -79,7 +79,21 @@ net::awaitable<void> UsersRepository::create(UserEntity& entity) {
     }
 }
 
-
 net::awaitable<void> UsersRepository::update(UserEntity& entity) {
+    LoggerSingleton::get().info("UsersRepository::update: called", {
+        {"id", entity.id},
+        {"email", entity.email.value_or("null")},
+        {"username", entity.username.value_or("null")},
+        {"picture", entity.picture.has_value() ? std::string("passed") : std::string("null")},
+    });
     std::vector<std::optional<std::string>> params;
+    if (!entity.email->empty()) params.emplace_back(entity.email);
+    if (!entity.username->empty()) params.emplace_back(entity.username);
+    if (!entity.password->empty()) params.emplace_back(entity.password);
+    if (!entity.picture->empty()) params.emplace_back(entity.picture);
+    LoggerSingleton::get().debug("UsersRepository::update: emplaced fields to update", {
+        {"size", params.size()}
+    });
+
+    co_return;
 }

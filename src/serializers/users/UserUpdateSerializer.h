@@ -1,7 +1,6 @@
 #include "core/errors/Errors.h"
 #include "entities/UserEntity.h"
 #include "core/serializers/BaseSerializer.h"
-#include "helpers/DatetimeConverter.h"
 #include "core/loggers/LoggerSingleton.h"
 #include <regex>
 
@@ -9,6 +8,7 @@ class UserUpdateSerializer final : public BaseSerializer<UserUpdateSerializer, U
 public:
     UserUpdateSerializer() = default;
 
+    std::int64_t id;
     std::optional<std::string> username;
     std::optional<std::string> picture;
     std::optional<std::string> email;
@@ -17,19 +17,19 @@ public:
     UserEntity toEntity() {
         LoggerSingleton::get().info("UserUpdateSerializer::toEntity: started");
         UserEntity userEntity;
-        userEntity.username = this->username.value_or("");
+        userEntity.id = this->id;
+        userEntity.username = this->username;
         userEntity.picture = this->picture;
-        userEntity.email = this->email.value_or("");
-        userEntity.password = this->password.value_or("");
+        userEntity.email = this->email;
+        userEntity.password = this->password;
+
         return userEntity;
     }
 
     friend void from_json(const nlohmann::json& j, UserUpdateSerializer& s) {
-        std::ostringstream ss;
-        //TODO: Clean password value from json to log
-        ss << "UserUpdateSerializer::from_json: called, " << "json=" << j;
-        LoggerSingleton::get().info(ss.str());
-        ss.clear();
+        LoggerSingleton::get().debug("UserUpdateSerializer::from_json: called", {
+            {"json", j.dump()},
+        });
 
         LoggerSingleton::get().debug(
             std::string("UserUpdateSerializer::from_json: checking username: ") +

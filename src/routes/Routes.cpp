@@ -12,6 +12,7 @@ namespace app{
         
         router.get("/users", bind_handler(ctx->usersController.get(), &UsersController::index));
         router.post("/users", bind_handler(ctx->usersController.get(), &UsersController::store));
+        router.patch("/users/{id}", bind_handler(ctx->usersController.get(), &UsersController::update));
 
         // DI example
         // r.get("/users", [repo = std::make_shared<UserRepo>(ctx.pg)]

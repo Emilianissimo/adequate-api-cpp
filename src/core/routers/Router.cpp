@@ -2,7 +2,7 @@
 #include "core/errors/Errors.h"
 #include "core/renderers/JsonRenderer.h"
 #include <boost/beast/http.hpp>
-#include <boost/beast/core/string.hpp>
+#include "core/loggers/LoggerSingleton.h"
 #include <algorithm>
 #include <sstream>
 #include <type_traits>
@@ -10,7 +10,15 @@
 using namespace std;
 
 Router& Router::add(http::verb method, std::string path, RouteFn fn) {
-    table_[std::move(path)][method] = std::move(fn);
+    for (auto& entry : table_) {
+        if (entry.original == path) {
+            entry.methods[method] = std::move(fn);
+            return *this;
+        }
+    }
+    auto entry = compileRoute(path);
+    entry.methods[method] = std::move(fn);
+    table_.push_back(std::move(entry));
     return *this;
 }
 
@@ -79,8 +87,8 @@ Outcome Router::makeOptionsAllow(const Request& request, const MethodMap& mm) {
     return tmp;
 }
 
+/// Exact-match: cutting query string
 std::string Router::normalizeTarget(const Request& request) {
-    // exact-match: cutting query string
     std::string target_path = std::string(request.target());
     if (auto pos = target_path.find('?'); pos != std::string::npos) target_path.resize(pos);
     return target_path;
@@ -131,21 +139,80 @@ Response Router::render(const Request& request, Outcome&& outcome) const {
     }, std::move(outcome));
 }
 
+/// Compiling route with
+/// Static segment fallback -> Static segment (without any params) and Dynamic param pattern
+Router::RouteEntry Router::compileRoute(const std::string& tmpl)
+{
+    auto escape_segment = [](const std::string& s) -> std::string {
+        static const std::string specials = R"(\.^$|()[]{}*+?!)";
+        std::string out; out.reserve(s.size()*2);
+        for (char c : s) {
+            if (specials.find(c) != std::string::npos) out.push_back('\\');
+            out.push_back(c);
+        }
+        return out;
+    };
+
+    std::string regexStr = "^";
+    std::vector<std::string> params;
+
+    std::istringstream ss(tmpl);
+    std::string seg;
+
+    while (std::getline(ss, seg, '/'))
+    {
+        if (seg.empty()) continue;
+        regexStr += "/";
+        if (seg.front() == '{' && seg.back() == '}')
+        {
+            std::string name = seg.substr(1, seg.size() - 2);
+            params.emplace_back(std::move(name));
+            regexStr += "([^/]+)";
+        } else
+        {
+            regexStr += escape_segment(seg);
+        }
+    }
+    regexStr += "$";
+
+    return {std::regex(regexStr), params, {}, tmpl};
+}
+
 net::awaitable<Response> Router::dispatch(Request& request) const {
-    int error_code;
+    LoggerSingleton::get().info("Router::dispatch: called", {
+        {"method", request.method()},
+        {"target", request.target()}
+    });
+    int error_code = 0;
     std::string error_msg;
     const auto path = this->normalizeTarget(request);
-    auto itPath = table_.find(path);
 
     auto middlewares = collectMiddlewaresFor(path);
-    if (itPath == table_.end()) {
-        co_return co_await this->runAfter(request, this->render(request, this->make404(request)), middlewares);
+
+    const MethodMap* methods = nullptr;
+    for (auto& entry : table_)
+    {
+        std::smatch match;
+        if (std::regex_match(path, match, entry.regex))
+        {
+            std::unordered_map<std::string, std::string> params;
+            for (size_t i = 0; i < entry.paramNames.size(); ++i)
+            {
+                params[entry.paramNames[i]] = match[i + 1];
+            }
+            request.path_params = std::move(params);
+
+            methods = &entry.methods;
+            break;
+        }
     }
-    const auto& methods = itPath->second;
+
+    if (!methods)
+        co_return co_await this->runAfter(request, this->render(request, this->make404(request)), middlewares);
 
     // Auto-HEAD: if no HEAD, but GET exists — return GET without body
-    if (request.method() == http::verb::head && !methods.count(http::verb::head) && methods.count(http::verb::get)) {
-        Outcome outcome = co_await runChain(request, methods.at(http::verb::get), middlewares);
+    if (request.method() == http::verb::head && !methods->count(http::verb::head) && methods->count(http::verb::get)) {
+        Outcome outcome = co_await runChain(request, methods->at(http::verb::get), middlewares);
         Response response = this->render(request, std::move(outcome));
         response.body().clear();
         response.set(http::field::content_length, "0");
@@ -156,13 +223,13 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
     }
 
      // Auto-OPTIONS: if no OPTIONS — return Allow
-    if (request.method() == http::verb::options && !methods.count(http::verb::options)) {
-        co_return co_await this->runAfter(request, this->render(request, this->makeOptionsAllow(request, methods)), middlewares);
+    if (request.method() == http::verb::options && !methods->count(http::verb::options)) {
+        co_return co_await this->runAfter(request, this->render(request, this->makeOptionsAllow(request, *methods)), middlewares);
     }
 
-    auto itMeth = methods.find(request.method());
-    if (itMeth == methods.end()) {
-        co_return co_await this->runAfter(request, this->render(request, this->make405(request, methods)), middlewares);
+    auto itMeth = methods->find(request.method());
+    if (itMeth == methods->end()) {
+        co_return co_await this->runAfter(request, this->render(request, this->make405(request, *methods)), middlewares);
     }
 
     try {

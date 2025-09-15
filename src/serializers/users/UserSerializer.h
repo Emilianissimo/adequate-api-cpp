@@ -13,17 +13,17 @@ public:
 
     std::int64_t id;
     std::string username;
-    std::optional<std::string> picture;
     std::string email;
+    std::optional<std::string> picture;
     std::string created_at;
     std::string updated_at;
 
     static UserSerializer fromEntity(const UserEntity& entity) {
         UserSerializer userSerializer;
         userSerializer.id = entity.id;
-        userSerializer.username = entity.username;
+        userSerializer.username = entity.username.value_or("");
+        userSerializer.email = entity.email.value_or("");
         userSerializer.picture = entity.picture;
-        userSerializer.email = entity.email;
         userSerializer.created_at = to_iso_string(entity.created_at);
         userSerializer.updated_at = to_iso_string(entity.updated_at);
         return userSerializer;
@@ -40,7 +40,7 @@ public:
         return userEntity;
     }
 
-    // for current optinal picture field we must provide custom to_json
+    /// For current optional picture field we must provide custom to_json
     friend void to_json(nlohmann::json& j, const UserSerializer& s) {
         j = nlohmann::json{
             {"id", s.id},
@@ -54,7 +54,7 @@ public:
             ? nlohmann::json(*s.picture)
             : nlohmann::json(nullptr);
     }
-    // In other cases macros with be enough
-    // Macros should live only in header file
+
+    /// In other cases macros with be enough. Macros should live only in header file
     // NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserSerializer, id, username, picture, created_at)
 };

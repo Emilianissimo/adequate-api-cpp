@@ -6,8 +6,6 @@
 #include <memory>
 #include <vector>
 
-namespace net = boost::asio;
-
 class PgPool {
 public:
     PgPool(net::any_io_executor executor, std::string dsn, std::size_t size);
@@ -18,7 +16,7 @@ public:
     };
 
     net::awaitable<Lease> acquire();
-    void shutdown(); // Gracefull kill
+    void shutdown(); // Gracefully kill
 
     net::awaitable<PgResult> query(
         std::string_view sql,
@@ -34,7 +32,7 @@ private:
     std::vector<std::shared_ptr<PgConnection>> idle_;
     std::size_t created_at_{0};
 
-    // Queue of awating objects
+    // Queue of awaiting objects
     net::experimental::channel<void(boost::system::error_code, std::shared_ptr<PgConnection>)> channel_;
     bool stopping_{false};
     net::awaitable<std::shared_ptr<PgConnection>> make_or_wait();

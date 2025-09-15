@@ -4,7 +4,6 @@
 #include <boost/asio.hpp>
 #include <libpq-fe.h>
 #include <string>
-#include <memory>
 #include <optional>
 #include <chrono>
 #include <unordered_set>

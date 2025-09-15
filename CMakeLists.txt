@@ -102,5 +102,6 @@ elseif(WIN32)
         ${CMAKE_SOURCE_DIR}/src
         ${PostgreSQL_INCLUDE_DIRS}
         ${libbcrypt_SOURCE_DIR}/include
+        ${Boost_INCLUDE_DIRS}
     )
 endif()

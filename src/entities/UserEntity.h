@@ -6,10 +6,11 @@
 
 struct UserEntity : public EntityInterface {
     std::int64_t id;
-    std::string  username;
-    std::string email;
+    /// For partial update we may need optional
+    std::optional<std::string>  username;
+    std::optional<std::string> email;
     std::optional<std::string> picture;
-    std::string password;
+    std::optional<std::string> password;
     std::chrono::system_clock::time_point created_at;
     std::chrono::system_clock::time_point updated_at;
 };
