@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(FetchContent)
 FetchContent_Declare(
     libbcrypt
-    GIT_REPOSITORY https://github.com/trusch/libbcrypt.git
+    GIT_REPOSITORY https://github.com/Emilianissimo/libbcrypt.git
     GIT_TAG        master
 )
 FetchContent_MakeAvailable(libbcrypt)
@@ -59,25 +59,48 @@ elseif(APPLE)
     endif()
 
     file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS
-            src/*.cpp
+        src/*.cpp
     )
 
     add_executable(app ${APP_SOURCES})
 
     target_link_libraries(app
-            PRIVATE
-            bcrypt
-            ${Boost_THREAD_LIBRARY}
-            Boost::thread
-            nlohmann_json::nlohmann_json
-            ${PostgreSQL_LIBRARIES}
-            pthread
+        PRIVATE
+        bcrypt
+        ${Boost_THREAD_LIBRARY}
+        Boost::thread
+        nlohmann_json::nlohmann_json
+        ${PostgreSQL_LIBRARIES}
+        pthread
     )
     target_include_directories(app PRIVATE
-            ${CMAKE_SOURCE_DIR}/src
-            ${PostgreSQL_INCLUDE_DIRS}
-            ${libbcrypt_SOURCE_DIR}/include
-            ${Boost_INCLUDE_DIRS}
+        ${CMAKE_SOURCE_DIR}/src
+        ${PostgreSQL_INCLUDE_DIRS}
+        ${libbcrypt_SOURCE_DIR}/include
+        ${Boost_INCLUDE_DIRS}
     )
 elseif(WIN32)
+    find_package(Boost REQUIRED COMPONENTS system thread url)
+
+    file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS
+        src/*.cpp
+    )
+
+    add_executable(app ${APP_SOURCES})
+
+    target_link_libraries(app
+        PRIVATE
+        bcrypt
+        Boost::system
+        Boost::thread
+        Boost::url
+        nlohmann_json::nlohmann_json
+        ${PostgreSQL_LIBRARIES}
+        pthread
+    )
+    target_include_directories(app PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${PostgreSQL_INCLUDE_DIRS}
+        ${libbcrypt_SOURCE_DIR}/include
+    )
 endif()

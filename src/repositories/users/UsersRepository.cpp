@@ -78,3 +78,8 @@ net::awaitable<void> UsersRepository::create(UserEntity& entity) {
         entity.id = std::stoll(result.rows[0].columns[0].data);
     }
 }
+
+
+net::awaitable<void> UsersRepository::update(UserEntity& entity) {
+    std::vector<std::optional<std::string>> params;
+}

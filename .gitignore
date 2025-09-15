@@ -11,3 +11,4 @@ uploads/
 src/media/
 CMakeSettings.json
 cmake-build-debug/
+cmake-build-debug-visual-studio/
