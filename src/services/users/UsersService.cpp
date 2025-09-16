@@ -20,10 +20,9 @@ public:
                 {"offset", filters.offset.has_value() ? std::to_string(filters.offset.value()) : "null"}
             }
         );
-        filters.limit = std::clamp<std::size_t>(filters.limit.value_or(50), 1, 1000);
 
         // place for transactions if you need them
-        std::vector<UserEntity> users = co_await repo_.get_list(filters);
+        std::vector<UserEntity> users = co_await repo_.getList(filters);
         std::vector<UserSerializer> serializedUsers;
         serializedUsers.reserve(users.size());
 

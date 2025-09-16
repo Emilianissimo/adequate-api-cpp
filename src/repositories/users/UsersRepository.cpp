@@ -3,7 +3,7 @@
 #include "core/db/postgres/builder/SQLBuilder.h"
 #include "core/loggers/LoggerSingleton.h"
 
-net::awaitable<std::vector<UserEntity>> UsersRepository::get_list(UserListFilter& filters) const {
+net::awaitable<std::vector<UserEntity>> UsersRepository::getList(UserListFilter& filters) const {
     const std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
     SQLBuilder qb("users");
     qb.select(fields);
