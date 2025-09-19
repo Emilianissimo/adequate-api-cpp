@@ -1,7 +1,6 @@
 #include "di/AppContext.h"
 #include <stdexcept>
 #include <atomic>
-#include "services/users/UsersService.cpp"
 
 namespace {
     std::shared_ptr<AppContext> g_ctx;
@@ -16,11 +15,14 @@ void appctx::init(std::shared_ptr<AppContext> ctx) {
 }
 
 void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
+    ctx->healthController = std::make_unique<HealthController>();
+
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);
     ctx->usersService = std::make_unique<UsersService>(*ctx->usersRepository);
     ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);
 
-    ctx->healthController = std::make_unique<HealthController>();
+    ctx->authenticationService = std::make_unique<AuthenticationService>(*ctx->usersRepository);
+    ctx->authenticationController = std::make_unique<AuthenticationController>(*ctx->authenticationService);
 }
 
 AppContext& appctx::get() {
