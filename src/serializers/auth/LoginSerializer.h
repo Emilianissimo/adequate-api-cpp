@@ -7,7 +7,7 @@
 #include "core/loggers/LoggerSingleton.h"
 #include "core/errors/Errors.h"
 
-class LoginSerializer final : public BaseSerializer<LoginSerializer> {
+class LoginSerializer final : public BaseSerializer<LoginSerializer, UserEntity> {
 public:
     LoginSerializer() = default;
 

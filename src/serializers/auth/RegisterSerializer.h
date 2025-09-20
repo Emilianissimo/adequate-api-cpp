@@ -7,7 +7,7 @@
 #include "core/loggers/LoggerSingleton.h"
 #include "core/errors/Errors.h"
 
-class RegisterSerializer final : public BaseSerializer<RegisterSerializer> {
+class RegisterSerializer final : public BaseSerializer<RegisterSerializer, UserEntity> {
 public:
     RegisterSerializer() = default;
 

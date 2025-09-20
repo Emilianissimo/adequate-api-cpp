@@ -11,7 +11,7 @@ class AuthenticationController {
 public:
     explicit AuthenticationController(const AuthenticationService& service) : service_(service) {}
     net::awaitable<Outcome> login(Request& request);
-    net::awaitable<Outcome> registration(Request& request);
+    net::awaitable<Outcome> registration(Request& request) const;
 private:
     AuthenticationService service_;
 };

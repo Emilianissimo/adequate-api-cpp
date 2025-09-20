@@ -5,7 +5,7 @@
 #include "entities/TokenPairEntity.h"
 #include "core/loggers/LoggerSingleton.h"
 
-class TokenResponseSerializer final : public BaseSerializer<TokenResponseSerializer> {
+class TokenResponseSerializer final : public BaseSerializer<TokenResponseSerializer, TokenPairEntity> {
 public:
     TokenResponseSerializer() = default;
 
