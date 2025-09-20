@@ -1,7 +1,6 @@
 #pragma once
 #include <optional>
 #include <string>
-#include <nlohmann/json.hpp>
 
 #include "entities/UserEntity.h"
 #include "core/serializers/BaseSerializer.h"

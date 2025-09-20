@@ -2,6 +2,9 @@
 #ifndef BEAST_API_AUTHENTICATIONSERVICE_H
 #define BEAST_API_AUTHENTICATIONSERVICE_H
 #include "repositories/users/UsersRepository.h"
+#include "serializers/auth/LoginSerializer.h"
+#include "serializers/auth/RegisterSerializer.h"
+#include "serializers/auth/TokenResponseSerializer.h"
 
 class AuthenticationService {
 public:

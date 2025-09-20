@@ -2,7 +2,6 @@
 #include <optional>
 #include <string>
 #include <regex>
-#include <nlohmann/json.hpp>
 
 #include "core/errors/Errors.h"
 #include "entities/UserEntity.h"
@@ -27,7 +26,10 @@ public:
     }
 
     /// Covering to_json / from_json declarative way
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserCreateResponseSerializer, id, username, email)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(
+        UserCreateResponseSerializer,
+        id, username, email
+    )
 };
 
 class UserCreateSerializer final : public BaseSerializer<UserCreateSerializer, UserEntity>{
@@ -57,9 +59,7 @@ public:
     }
 
     friend void from_json(const nlohmann::json& j, UserCreateSerializer& s) {
-        LoggerSingleton::get().debug("UserCreateSerializer::from_json: called", {
-            {"json", j.dump()},
-        });
+        LoggerSingleton::get().info("UserCreateSerializer::from_json: called");
 
         LoggerSingleton::get().debug(
             std::string("UserCreateSerializer::from_json: checking username: ") +
