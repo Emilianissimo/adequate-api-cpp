@@ -18,6 +18,10 @@ public:
         this->sql_ += "SELECT " + boost::algorithm::join(fields, ",") + " FROM " + this->tableName_;
     }
 
+    void exists() {
+        this->sql_ += "SELECT EXISTS(" + this->sql_ + ")";
+    }
+
     void insert(const std::vector<std::string>& fields = {}) {
         if (fields.empty()) {
             throw std::invalid_argument("Fields must be provided for INSERT");

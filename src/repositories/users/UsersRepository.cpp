@@ -57,6 +57,24 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::getList(UserListFilter&
     co_return users;
 }
 
+net::awaitable<bool> UsersRepository::exists(UserListFilter& filters) const {
+    SQLBuilder qb("users");
+    std::vector<std::string> fields{ "1"};
+    qb.select(fields);
+    // TODO: may be expanded
+    if (filters.id.has_value()) {
+        qb.where("email", filters.email.value_or(""));
+    }
+    qb.exists();
+    PgResult result = co_await pool_->query(
+       qb.str(),
+       qb.params(),
+       std::chrono::seconds(5)
+    );
+    // first and only one exists anyway as a row
+    co_return result.rows[0].columns[0].data == "t";
+}
+
 net::awaitable<void> UsersRepository::create(UserEntity& entity) const {
     std::vector<std::optional<std::string>> params;
     params.emplace_back(entity.username);

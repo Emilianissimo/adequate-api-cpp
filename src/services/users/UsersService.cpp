@@ -103,3 +103,14 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data)
         }
     }
 }
+
+net::awaitable<bool> UsersService::exists(UserListFilter& filters) const {
+    LoggerSingleton::get().info(
+        "UsersService::list: started", {
+            {"id", filters.limit.has_value() ? std::to_string(filters.limit.value()) : "null"},
+            {"username", filters.username.value_or("null")},
+            {"email", filters.email.value_or("null")},
+        }
+    );
+    co_return co_await repo_.exists(filters);
+}

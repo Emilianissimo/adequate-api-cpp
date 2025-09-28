@@ -56,7 +56,7 @@ net::awaitable<Outcome> UsersController::store(Request& request) const {
     }
 
     LoggerSingleton::get().debug(
-        "UsersController::store: Checking up if any error occured. Error msg: " + (error_msg.has_value() ? *error_msg : "")
+        "UsersController::store: Checking up if any error occurred. Error msg: " + (error_msg.has_value() ? *error_msg : "")
     );
     if (error_msg){
         JsonResult error_response{
@@ -122,7 +122,7 @@ net::awaitable<Outcome> UsersController::update(Request& request) const {
     }
 
     LoggerSingleton::get().debug(
-        "UsersController::update: Checking up if any error occured. Error msg: " + (error_msg.has_value() ? *error_msg : "")
+        "UsersController::update: Checking up if any error occurred. Error msg: " + (error_msg.has_value() ? *error_msg : "")
     );
     if (error_msg){
         JsonResult error_response{
