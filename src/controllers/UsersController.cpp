@@ -86,12 +86,11 @@ net::awaitable<Outcome> UsersController::store(Request& request) const {
         co_return error_response;
     }
 
-    JsonResult response{
+    co_return JsonResult{
         user.to_json(),
         http::status::created,
         request.keep_alive()
     };
-    co_return response;
 }
 
 net::awaitable<Outcome> UsersController::update(Request& request) const {

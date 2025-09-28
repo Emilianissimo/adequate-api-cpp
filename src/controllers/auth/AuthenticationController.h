@@ -6,14 +6,21 @@
 #include "core/http/ResponseTypes.h"
 #include "core/interfaces/HttpInterface.h"
 #include "services/auth/AuthenticationService.h"
+#include "services/users/UsersService.h"
 
 class AuthenticationController {
 public:
-    explicit AuthenticationController(const AuthenticationService& service) : service_(service) {}
-    net::awaitable<Outcome> login(Request& request) const;
+    explicit AuthenticationController(
+        const AuthenticationService& service,
+        const UsersService& usersService
+        ) : service_(service)
+        , usersService_(usersService)
+    {}
     net::awaitable<Outcome> registration(Request& request) const;
+    net::awaitable<Outcome> login(Request& request) const;
 private:
     AuthenticationService service_;
+    UsersService usersService_;
 };
 
 

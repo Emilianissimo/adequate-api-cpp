@@ -2,7 +2,21 @@
 #include <bcrypt/BCrypt.hpp>
 
 net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(LoginSerializer& data) const {
-    return;
+    LoggerSingleton::get().info("AuthenticationService::obtainTokens: called", {
+        {"email", data.email},
+        {"password", data.password},
+    });
+
+    UserListFilter filters;
+    filters.email = data.email;
+
+    const UserEntity user = co_await this->usersRepository_.getOne(filters);
+
+    LoggerSingleton::get().debug("AuthenticationService::obtainTokens: checking password");
+    if (BCrypt::generateHash(data.password) != user.password.value()) throw ValidationError("Incorrect credentials");
+
+    // JWT SERVICE TO GENERATE TOKEN PAIRS AND SET THEM TO THE SERIALIZER
+    co_return;
 }
 
 net::awaitable<void> AuthenticationService::registerUser(RegisterSerializer& data) const {

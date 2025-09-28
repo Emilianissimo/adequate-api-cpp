@@ -2,6 +2,7 @@
 #include "helpers/DatetimeConverter.h"
 #include "core/db/postgres/builder/SQLBuilder.h"
 #include "core/loggers/LoggerSingleton.h"
+#include "core/errors/Errors.h"
 
 net::awaitable<std::vector<UserEntity>> UsersRepository::getList(UserListFilter& filters) const {
     const std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
@@ -57,22 +58,49 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::getList(UserListFilter&
     co_return users;
 }
 
+/// Throws validation error on user not found
+net::awaitable<UserEntity> UsersRepository::getOne(UserListFilter& filters) const {
+    const std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
+    SQLBuilder qb("users");
+    qb.select(fields);
+    if (filters.email.has_value()) {
+        qb.where("email", filters.email.value());
+    }
+    qb.limit(1);
+    auto [columns_names, rows] = co_await pool_->query(
+        qb.str(),
+        qb.params(),
+        std::chrono::seconds(5)
+    );
+    UserEntity user;
+    if (rows.empty()) throw ValidationError("user_not_found");
+    user.id = std::stoll(rows[0].columns[0].data);
+    user.username = rows[0].columns[1].data;
+    user.picture = rows[0].columns[2].is_null
+        ? std::nullopt
+        : std::make_optional(rows[0].columns[2].data);
+    user.email = rows[0].columns[3].data;
+    user.created_at = parse_pg_timestamp(rows[0].columns[4].data);
+    user.updated_at = parse_pg_timestamp(rows[0].columns[5].data);
+    co_return user;
+}
+
 net::awaitable<bool> UsersRepository::exists(UserListFilter& filters) const {
     SQLBuilder qb("users");
-    std::vector<std::string> fields{ "1"};
+    const std::vector<std::string> fields{ "1"};
     qb.select(fields);
     // TODO: may be expanded
     if (filters.id.has_value()) {
         qb.where("email", filters.email.value_or(""));
     }
     qb.exists();
-    PgResult result = co_await pool_->query(
+    auto [columns_names, rows] = co_await pool_->query(
        qb.str(),
        qb.params(),
        std::chrono::seconds(5)
     );
     // first and only one exists anyway as a row
-    co_return result.rows[0].columns[0].data == "t";
+    co_return rows[0].columns[0].data == "t";
 }
 
 net::awaitable<void> UsersRepository::create(UserEntity& entity) const {

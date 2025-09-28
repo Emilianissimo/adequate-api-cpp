@@ -7,6 +7,7 @@
 #include "serializers/auth/RegisterSerializer.h"
 #include "serializers/auth/LoginSerializer.h"
 #include "core/http/ResponseTypes.h"
+#include "filters/users/UserListFilter.h"
 
 net::awaitable<Outcome> AuthenticationController::registration(Request& request) const {
     LoggerSingleton::get().debug("AuthenticationController::registration: called", {
@@ -88,10 +89,57 @@ net::awaitable<Outcome> AuthenticationController::login(Request& request) const 
         co_return error_response;
     }
 
+    bool userExists;
+    UserListFilter filters;
+    filters.email = serializer.email;
     try {
-        // UsersSerivice::exists
+        userExists = co_await this->usersService_.exists(filters);
     } catch (const ValidationError& e) {
         error_msg = e.what();
         LoggerSingleton::get().warn("AuthenticationController::login: Validation failed, error: " + (error_msg.has_value() ? *error_msg : ""));
     }
+
+    if (error_msg){
+        JsonResult error_response{
+            json{{"error", *error_msg}},
+            http::status::bad_gateway,
+            request.keep_alive()
+        };
+        co_return error_response;
+    }
+
+    if (!userExists) {
+        JsonResult error_response{
+            json{{"error", "Incorrect login or password"}},
+            http::status::unprocessable_entity,
+            request.keep_alive()
+        };
+        co_return error_response;
+    }
+
+    TokenResponseSerializer responseSerializer;
+    try {
+        responseSerializer = co_await this->service_.obtainTokens(serializer);
+    } catch (const ValidationError& e) {
+        error_msg = e.what();
+        if (error_msg == "user_not_found") error_msg = "Incorrect credentials";
+        LoggerSingleton::get().warn("AuthenticationController::login: Validation failed, error: " + (error_msg.has_value() ? *error_msg : ""));
+    }
+
+    if (error_msg){
+        JsonResult error_response{
+            json{{"error", *error_msg}},
+            http::status::unprocessable_entity,
+            request.keep_alive()
+        };
+        co_return error_response;
+    }
+
+    LoggerSingleton::get().debug("Converting serializer to JSON");
+
+    co_return JsonResult{
+        responseSerializer.to_json(),
+        http::status::created,
+        request.keep_alive()
+    };
 }

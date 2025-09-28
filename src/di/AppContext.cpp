@@ -22,7 +22,10 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
     ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);
 
     ctx->authenticationService = std::make_unique<AuthenticationService>(*ctx->usersRepository);
-    ctx->authenticationController = std::make_unique<AuthenticationController>(*ctx->authenticationService);
+    ctx->authenticationController = std::make_unique<AuthenticationController>(
+        *ctx->authenticationService,
+        *ctx->usersService
+    );
 }
 
 AppContext& appctx::get() {
