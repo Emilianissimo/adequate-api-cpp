@@ -29,7 +29,8 @@ EnvConfig EnvConfig::load()
     config.pg_dsn        = getEnvOrDefault("DATABASE_URL");
     config.redis_host    = getEnvOrDefault("REDIS_HOST", "127.0.0.1");
     config.redis_port    = getEnvOrDefaultUint16("REDIS_PORT", 6379);
-    config.redis_password= getEnvOrDefault("REDIS_PASSWORD");
+    config.redis_password= getEnvOrDefault("REDIS_PASSWORD", "");
+    config.secret_key    = getEnvOrDefault("SECRET_KEY", "");
 
     return config;
 }

@@ -5,14 +5,19 @@
 #include "serializers/auth/LoginSerializer.h"
 #include "serializers/auth/RegisterSerializer.h"
 #include "serializers/auth/TokenResponseSerializer.h"
+#include "services/jwt/JwtService.h"
 
 class AuthenticationService {
 public:
-    explicit AuthenticationService(UsersRepository& usersRepository) : usersRepository_(usersRepository) {}
+    explicit AuthenticationService(
+        UsersRepository& usersRepository,
+        JwtService& jwtService
+    ) : usersRepository_(usersRepository), jwtService_(jwtService) {}
     net::awaitable<TokenResponseSerializer> obtainTokens(LoginSerializer& data) const;
     net::awaitable<void> registerUser(RegisterSerializer& data) const;
 private:
     UsersRepository& usersRepository_;
+    JwtService& jwtService_;
 };
 
 

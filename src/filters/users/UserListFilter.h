@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #include "core/filters/BaseFilter.h"
 
 class UserListFilter final : public BaseFilter {

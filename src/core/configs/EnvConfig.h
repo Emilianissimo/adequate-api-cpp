@@ -9,6 +9,7 @@ struct EnvConfig {
     std::string redis_host;
     uint16_t redis_port = 6379;
     std::string redis_password;
+    std::string secret_key;
 
     static EnvConfig load();
 };

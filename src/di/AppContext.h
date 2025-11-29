@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
 #include "core/db/postgres/interfaces/PgPool.h"
+#include "core/configs/EnvConfig.h"
+#include "services/jwt/JwtService.h"
 
 /// Health
 #include "controllers/HealthController.h"
@@ -15,6 +17,9 @@
 struct AppContext {
     std::shared_ptr<PgPool> pg;
     // std::shared_ptr<Redis>  redis;
+
+    EnvConfig config;
+    std::unique_ptr<JwtService> jwtService;
 
     std::unique_ptr<HealthController> healthController;
 

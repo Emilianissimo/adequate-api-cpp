@@ -59,7 +59,7 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::getList(UserListFilter&
 }
 
 /// Throws validation error on user not found
-net::awaitable<UserEntity> UsersRepository::getOne(UserListFilter& filters) const {
+net::awaitable<UserEntity> UsersRepository::getOne(UserFilter& filters) const {
     const std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
     SQLBuilder qb("users");
     qb.select(fields);

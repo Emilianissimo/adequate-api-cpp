@@ -15,13 +15,17 @@ void appctx::init(std::shared_ptr<AppContext> ctx) {
 }
 
 void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
+    ctx->jwtService = std::make_unique<JwtService>(ctx->config);
     ctx->healthController = std::make_unique<HealthController>();
 
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);
     ctx->usersService = std::make_unique<UsersService>(*ctx->usersRepository);
     ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);
 
-    ctx->authenticationService = std::make_unique<AuthenticationService>(*ctx->usersRepository);
+    ctx->authenticationService = std::make_unique<AuthenticationService>(
+        *ctx->usersRepository,
+        *ctx->jwtService
+    );
     ctx->authenticationController = std::make_unique<AuthenticationController>(
         *ctx->authenticationService,
         *ctx->usersService

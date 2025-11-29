@@ -12,9 +12,16 @@ FetchContent_Declare(
     GIT_TAG        master
 )
 FetchContent_MakeAvailable(libbcrypt)
+FetchContent_Declare(
+    jwt-cpp
+    GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
+    GIT_TAG v0.7.1
+)
+FetchContent_MakeAvailable(jwt-cpp)
 
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(PostgreSQL REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 # For docker and linux CLION
 if(UNIX AND NOT APPLE)
@@ -33,6 +40,9 @@ if(UNIX AND NOT APPLE)
         Boost::thread
         Boost::url
         nlohmann_json::nlohmann_json
+        jwt-cpp
+        OpenSSL::SSL
+        OpenSSL::Crypto
         ${PostgreSQL_LIBRARIES}
         pthread
     )
@@ -70,6 +80,9 @@ elseif(APPLE)
         ${Boost_THREAD_LIBRARY}
         Boost::thread
         nlohmann_json::nlohmann_json
+        jwt-cpp
+        OpenSSL::SSL
+        OpenSSL::Crypto
         ${PostgreSQL_LIBRARIES}
         pthread
     )
@@ -95,6 +108,9 @@ elseif(WIN32)
         Boost::thread
         Boost::url
         nlohmann_json::nlohmann_json
+        jwt-cpp
+        OpenSSL::SSL
+        OpenSSL::Crypto
         ${PostgreSQL_LIBRARIES}
         pthread
     )

@@ -7,16 +7,19 @@ net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(Logi
         {"password", data.password},
     });
 
-    UserListFilter filters;
+    UserFilter filters;
     filters.email = data.email;
 
-    const UserEntity user = co_await this->usersRepository_.getOne(filters);
+    UserEntity user = co_await this->usersRepository_.getOne(filters);
 
     LoggerSingleton::get().debug("AuthenticationService::obtainTokens: checking password");
     if (BCrypt::generateHash(data.password) != user.password.value()) throw ValidationError("Incorrect credentials");
 
-    // JWT SERVICE TO GENERATE TOKEN PAIRS AND SET THEM TO THE SERIALIZER
-    co_return;
+    TokenResponseSerializer tokenPair;
+    // TODO: add refresh token logic (I'm lazy as fuck)
+    tokenPair.refreshToken = "None";
+    tokenPair.accessToken = co_await this->jwtService_.encode(user);
+    co_return tokenPair;
 }
 
 net::awaitable<void> AuthenticationService::registerUser(RegisterSerializer& data) const {
