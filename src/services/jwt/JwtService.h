@@ -1,7 +1,7 @@
 //
 // Created by Emil Erofeevskiy on 29/09/25.
 //
-
+#pragma once
 #ifndef BEAST_API_JWTSERVICE_H
 #define BEAST_API_JWTSERVICE_H
 
@@ -23,11 +23,11 @@ public:
     JwtException(JwtError err, std::string msg)
         : err_(err), msg_(std::move(msg)) {}
 
-    const char* what() const noexcept override {
+    [[nodiscard]] const char* what() const noexcept override {
         return msg_.c_str();
     }
 
-    JwtError code() const noexcept { return err_; }
+    [[nodiscard]] JwtError code() const noexcept { return err_; }
 
 private:
     JwtError err_;

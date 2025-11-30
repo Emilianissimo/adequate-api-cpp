@@ -18,6 +18,7 @@ net::awaitable<std::string> JwtService::encode(UserEntity &user) const {
     .sign(jwt::algorithm::hs256{this->config_.secret_key});
 }
 
+// TODO: think about ability to evade getting directly user from decode function, but as far as it is average usage of it I guess I wouldn't give a fuck
 net::awaitable<UserEntity> JwtService::decode(std::string& token) const {
     try {
         const jwt::decoded_jwt data = jwt::decode(token);

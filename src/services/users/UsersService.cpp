@@ -104,7 +104,7 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data)
     }
 }
 
-net::awaitable<bool> UsersService::exists(UserListFilter& filters) const {
+net::awaitable<bool> UsersService::exists(UserFilter& filters) const {
     LoggerSingleton::get().info(
         "UsersService::exists: started", {
             {"email", filters.email.value_or("null")},

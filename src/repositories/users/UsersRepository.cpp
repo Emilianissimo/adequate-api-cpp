@@ -85,7 +85,7 @@ net::awaitable<UserEntity> UsersRepository::getOne(UserFilter& filters) const {
     co_return user;
 }
 
-net::awaitable<bool> UsersRepository::exists(UserListFilter& filters) const {
+net::awaitable<bool> UsersRepository::exists(UserFilter& filters) const {
     SQLBuilder qb("users");
     const std::vector<std::string> fields{ "1"};
     qb.select(fields);

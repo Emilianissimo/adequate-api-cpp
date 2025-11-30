@@ -8,6 +8,7 @@ namespace http = boost::beast::http;
 
 class Request {
 public:
+    std::optional<int> user_id;
     std::unordered_map<std::string, std::string> path_params;
 
     using RawRequest = http::request<http::string_body>;

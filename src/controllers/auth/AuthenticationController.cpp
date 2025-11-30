@@ -90,7 +90,7 @@ net::awaitable<Outcome> AuthenticationController::login(Request& request) const 
     }
 
     bool userExists;
-    UserListFilter filters;
+    UserFilter filters;
     filters.email = serializer.email;
     try {
         userExists = co_await this->usersService_.exists(filters);

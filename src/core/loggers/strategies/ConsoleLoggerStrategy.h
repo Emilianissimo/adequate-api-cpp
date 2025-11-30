@@ -1,5 +1,5 @@
 #pragma once
-#include "core/loggers/LoggerInterface.h"
+#include "../../interfaces/LoggerInterface.h"
 #include <iostream>
 #include <chrono>
 #include <iomanip>
