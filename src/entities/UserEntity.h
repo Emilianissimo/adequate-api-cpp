@@ -1,6 +1,7 @@
 #pragma once
 #include <optional>
 #include <string>
+#include <chrono>
 #include "core/interfaces/EntityInterface.h"
 
 struct UserEntity : public EntityInterface {
