@@ -8,7 +8,7 @@ net::awaitable<Outcome> AuthenticationMiddleware::handle(Request& request, Next 
     auto& rawRequest = request.raw();
     std::optional<std::string> error_msg;
 
-    if (!rawRequest.base().find("Authorization")) {
+    if (auto header = rawRequest.base().find("Authorization"); header == rawRequest.base().end()) {
         LoggerSingleton::get().warn("AuthenticationMiddleware::handle: No header provided");
         JsonResult error_response{
             json{{"error", "Missing Authorization header"}},
@@ -32,9 +32,9 @@ net::awaitable<Outcome> AuthenticationMiddleware::handle(Request& request, Next 
 
     UserEntity incomingUser;
     try {
-        incomingUser = co_await this->jwtService_.decode(token);
+        incomingUser = co_await this->jwtService_.decode(std::string(token));
     } catch (const JwtException& e) {
-        error_msg = this->mapJwtError(e);
+        error_msg = AuthenticationMiddleware::mapJwtError(e);
         LoggerSingleton::get().warn("AuthenticationMiddleware::handle: Jwt decode error");
     }
     if (error_msg) {

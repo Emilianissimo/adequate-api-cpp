@@ -22,6 +22,12 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
     ctx->usersService = std::make_unique<UsersService>(*ctx->usersRepository);
     ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);
 
+    // Auth Middleware
+    ctx->authenticationMiddleware = std::make_shared<AuthenticationMiddleware>(
+        *ctx->jwtService,
+        *ctx->usersService
+    );
+
     ctx->authenticationService = std::make_unique<AuthenticationService>(
         *ctx->usersRepository,
         *ctx->jwtService

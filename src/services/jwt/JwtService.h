@@ -37,8 +37,8 @@ private:
 class JwtService {
 public:
     explicit JwtService(EnvConfig& config) : config_(config) {};
-    net::awaitable<std::string> encode(UserEntity& user) const;
-    net::awaitable<UserEntity> decode(std::string& token) const;
+    net::awaitable<std::string> encode(const UserEntity& user) const;
+    net::awaitable<UserEntity> decode(const std::string& token) const;
 private:
     EnvConfig& config_;
 };

@@ -12,6 +12,7 @@
 #include "services/users/UsersService.h"
 /// Authentication
 #include "controllers/auth/AuthenticationController.h"
+#include "middlewares/AuthenticationMiddleware.h"
 #include "services/auth/AuthenticationService.h"
 
 struct AppContext {
@@ -29,6 +30,8 @@ struct AppContext {
 
     std::unique_ptr<AuthenticationService> authenticationService;
     std::unique_ptr<AuthenticationController> authenticationController;
+
+    std::shared_ptr<AuthenticationMiddleware> authenticationMiddleware;
 };
 
 namespace appctx {

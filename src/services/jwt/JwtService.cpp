@@ -7,7 +7,7 @@
 
 #include "core/loggers/LoggerSingleton.h"
 
-net::awaitable<std::string> JwtService::encode(UserEntity &user) const {
+net::awaitable<std::string> JwtService::encode(const UserEntity &user) const {
     // I bet we may set those strings as params from env.
     co_return jwt::create()
     .set_issuer("adequate-api")
@@ -19,7 +19,7 @@ net::awaitable<std::string> JwtService::encode(UserEntity &user) const {
 }
 
 // TODO: think about ability to evade getting directly user from decode function, but as far as it is average usage of it I guess I wouldn't give a fuck
-net::awaitable<UserEntity> JwtService::decode(std::string& token) const {
+net::awaitable<UserEntity> JwtService::decode(const std::string& token) const {
     try {
         const jwt::decoded_jwt data = jwt::decode(token);
         jwt::verify()
