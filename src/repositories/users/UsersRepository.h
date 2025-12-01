@@ -8,9 +8,9 @@ class UsersRepository : BaseRepository {
 public:
     using BaseRepository::BaseRepository;
     net::awaitable<std::vector<UserEntity>> getList(UserListFilter& filters) const;
-    net::awaitable<UserEntity> getOne(UserFilter& filters) const;
+    [[nodiscard]] net::awaitable<UserEntity> getOne(const UserFilter& filters) const;
     net::awaitable<void> create(UserEntity& entity) const;
-    net::awaitable<bool> exists(UserFilter& filters) const;
+    [[nodiscard]] net::awaitable<bool> exists(const UserFilter& filters) const;
 
     static net::awaitable<void> update(UserEntity& entity);
 };

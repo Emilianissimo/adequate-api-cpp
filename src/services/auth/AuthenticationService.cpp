@@ -10,10 +10,10 @@ net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(Logi
     UserFilter filters;
     filters.email = data.email;
 
-    UserEntity user = co_await this->usersRepository_.getOne(filters);
+    const UserEntity user = co_await this->usersRepository_.getOne(filters);
 
     LoggerSingleton::get().debug("AuthenticationService::obtainTokens: checking password");
-    if (BCrypt::generateHash(data.password) != user.password.value()) throw ValidationError("Incorrect credentials");
+    if (!BCrypt::validatePassword(data.password, user.password.value())) throw ValidationError("Incorrect credentials");
 
     TokenResponseSerializer tokenPair;
     // TODO: add refresh token logic (I'm lazy as fuck)

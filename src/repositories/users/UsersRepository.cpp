@@ -59,8 +59,8 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::getList(UserListFilter&
 }
 
 /// Throws validation error on user not found
-net::awaitable<UserEntity> UsersRepository::getOne(UserFilter& filters) const {
-    const std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
+net::awaitable<UserEntity> UsersRepository::getOne(const UserFilter& filters) const {
+    const std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at", "password" };
     SQLBuilder qb("users");
     qb.select(fields);
     if (filters.email.has_value()) {
@@ -82,15 +82,19 @@ net::awaitable<UserEntity> UsersRepository::getOne(UserFilter& filters) const {
     user.email = rows[0].columns[3].data;
     user.created_at = parse_pg_timestamp(rows[0].columns[4].data);
     user.updated_at = parse_pg_timestamp(rows[0].columns[5].data);
+    user.password = rows[0].columns[6].data;
     co_return user;
 }
 
-net::awaitable<bool> UsersRepository::exists(UserFilter& filters) const {
+net::awaitable<bool> UsersRepository::exists(const UserFilter& filters) const {
     SQLBuilder qb("users");
     const std::vector<std::string> fields{ "1"};
     qb.select(fields);
     // TODO: may be expanded
     if (filters.id.has_value()) {
+        qb.where("id", filters.id.value());
+    }
+    if (filters.email.has_value()) {
         qb.where("email", filters.email.value_or(""));
     }
     qb.exists();

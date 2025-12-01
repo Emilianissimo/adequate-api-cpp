@@ -19,7 +19,7 @@ public:
     }
 
     void exists() {
-        this->sql_ += "SELECT EXISTS(" + this->sql_ + ")";
+        this->sql_ = "SELECT EXISTS(" + this->sql_ + ")";
     }
 
     void insert(const std::vector<std::string>& fields = {}) {
@@ -44,9 +44,9 @@ public:
     template <typename T>
     void where(const std::string& expr, const T& value) {
         if (this->hasWhere_) {
-            this->sql_ += " AND " + expr + " $" + std::to_string(nextIndex());
+            this->sql_ += " AND " + expr + " = $" + std::to_string(nextIndex());
         } else {
-            this->sql_ += " WHERE " + expr + " $" + std::to_string(nextIndex());
+            this->sql_ += " WHERE " + expr + " = $" + std::to_string(nextIndex());
             this->hasWhere_ = true;
         }
         this->params_.emplace_back(toString(value));

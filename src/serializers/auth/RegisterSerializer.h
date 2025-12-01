@@ -25,7 +25,7 @@ public:
         return serializer;
     }
 
-    UserEntity toEntity() const {
+    [[nodiscard]] UserEntity toEntity() const {
         LoggerSingleton::get().info("RegisterSerializer::toEntity");
         UserEntity entity;
         entity.username = username;
@@ -60,6 +60,7 @@ public:
             throw ValidationError("Password must be at least 6 characters");
         }
 
+        s.username = j["username"].get<std::string>();
         s.email = j["email"].get<std::string>();
         s.password = j["password"].get<std::string>();
     }

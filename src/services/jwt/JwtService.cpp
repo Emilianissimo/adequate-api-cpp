@@ -18,7 +18,8 @@ net::awaitable<std::string> JwtService::encode(const UserEntity &user) const {
     .sign(jwt::algorithm::hs256{this->config_.secret_key});
 }
 
-// TODO: think about ability to evade getting directly user from decode function, but as far as it is average usage of it I guess I wouldn't give a fuck
+// TODO: think about ability to evade getting directly user from decode function,
+// but as far as it is average usage of it I guess I wouldn't give a fuck
 net::awaitable<UserEntity> JwtService::decode(const std::string& token) const {
     try {
         const jwt::decoded_jwt data = jwt::decode(token);
@@ -27,7 +28,7 @@ net::awaitable<UserEntity> JwtService::decode(const std::string& token) const {
             .with_issuer("adequate-api")
             .verify(data);
         UserEntity user;
-        user.id = data.get_payload_claim("sub").as_integer();
+        user.id = std::stoi(data.get_payload_claim("sub").as_string());
         co_return user;
     }
     catch (const jwt::error::signature_verification_exception& e) {

@@ -12,7 +12,16 @@ namespace app{
         /// Scoped
         router.get("/health", bind_handler(ctx->healthController.get(), &HealthController::index));
 
+        /// Authentication
+        router.post("/register", bind_handler(
+            ctx->authenticationController.get(), &AuthenticationController::registration
+        ));
+        router.post("/login", bind_handler(
+            ctx->authenticationController.get(), &AuthenticationController::login
+        ));
+
         router.use("/users", ctx->authenticationMiddleware);
+        /// Users CRUD
         router.get("/users", bind_handler(ctx->usersController.get(), &UsersController::index));
         router.post("/users", bind_handler(ctx->usersController.get(), &UsersController::store));
         router.patch("/users/{id}", bind_handler(ctx->usersController.get(), &UsersController::update));

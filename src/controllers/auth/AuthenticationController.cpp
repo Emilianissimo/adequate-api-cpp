@@ -7,7 +7,6 @@
 #include "serializers/auth/RegisterSerializer.h"
 #include "serializers/auth/LoginSerializer.h"
 #include "core/http/ResponseTypes.h"
-#include "filters/users/UserListFilter.h"
 
 net::awaitable<Outcome> AuthenticationController::registration(Request& request) const {
     LoggerSingleton::get().debug("AuthenticationController::registration: called", {
