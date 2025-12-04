@@ -10,15 +10,17 @@
 
 using namespace std;
 
-Router& Router::add(http::verb method, std::string path, RouteFn fn) {
+Router& Router::add(http::verb method, const std::string& path, RouteFn fn, const std::vector<std::string>& allowedContentTypes) {
     for (auto& entry : table_) {
         if (entry.original == path) {
             entry.methods[method] = std::move(fn);
+            entry.allowedContentTypes[method] = std::move(allowedContentTypes);
             return *this;
         }
     }
     auto entry = compileRoute(path);
     entry.methods[method] = std::move(fn);
+    entry.allowedContentTypes[method] = std::move(allowedContentTypes);
     table_.push_back(std::move(entry));
     return *this;
 }
@@ -64,6 +66,11 @@ static std::string buildAllowHeader(const Router::MethodMap& mm) {
     return allow;
 }
 
+Outcome Router::make400(const Request& request, const std::string& error) {
+    const JsonResult result{json{{"error", error}}, http::status::not_found, false};
+    return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
+}
+
 Outcome Router::make404(const Request& request) {
     const JsonResult result{json{{"error", "Not found"}}, http::status::not_found, false};
     return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
@@ -71,6 +78,20 @@ Outcome Router::make404(const Request& request) {
 
 Outcome Router::make405(const Request& request, const MethodMap& mm) {
     const JsonResult result{ json{{"error", "Method Not Allowed"}}, http::status::method_not_allowed, false };
+    Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
+    tmp.set(http::field::allow, buildAllowHeader(mm));
+    return tmp;
+}
+
+Outcome Router::make413(const Request& request, const MethodMap& mm) {
+    const JsonResult result{json{{"error", "Payload is too large"}}, http::status::payload_too_large, false};
+    Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
+    tmp.set(http::field::allow, buildAllowHeader(mm));
+    return tmp;
+}
+
+Outcome Router::make415(const Request& request, const MethodMap& mm) {
+    const JsonResult result{json{{"error", "Unsupported media type"}}, http::status::unsupported_media_type, false};
     Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
     tmp.set(http::field::allow, buildAllowHeader(mm));
     return tmp;
@@ -228,6 +249,71 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
     auto itMeth = methods->find(request.method());
     if (itMeth == methods->end()) {
         co_return co_await Router::runAfter(request, Router::render(request, Router::make405(request, *methods)), middlewares);
+    }
+
+    auto& entry = *ranges::find_if(table_, [&](const RouteEntry& e){ return e.methods.count(request.method()); });
+
+    std::vector<std::string> allowed;
+    if (entry.allowedContentTypes.contains(request.method())) {
+        allowed = entry.allowedContentTypes.at(request.method());
+    }
+
+    std::string ct = request.content_type();
+
+    if (!allowed.empty() && ct.empty()) {
+        co_return co_await Router::runAfter(
+            request,
+            Router::render(request, make415(request, *methods)),
+            middlewares
+        );
+    }
+
+    if (!allowed.empty()) {
+        bool ok = false;
+        for (const auto& t : allowed) {
+            if (ct.find(t) != std::string::npos) {
+                ok = true;
+                break;
+            }
+        }
+
+        if (!ok) {
+            co_return co_await Router::runAfter(
+                request,
+                Router::render(request, make415(request, *methods)),
+                middlewares
+            );
+        }
+    }
+
+    // DoS protection
+    constexpr size_t MAX_BODY_SIZE = 20 * 1024 * 1024;
+    if (request.raw().body().size() > MAX_BODY_SIZE) {
+        co_return co_await Router::runAfter(
+            request,
+            Router::render(request, make413(request, *methods)),
+            middlewares
+        );
+    }
+
+    try {
+        if (ct.find("application/json") != std::string::npos) {
+            request.ensureJsonValid();
+        }
+        else if (ct.find("multipart/form-data") != std::string::npos) {
+            request.parseMultipart();
+        }
+    }
+    catch (const std::exception& e) {
+        std::string bodyContentTypeError = e.what();
+    }
+
+    if (std::string bodyContentTypeError; !bodyContentTypeError.empty()) {
+        co_return co_await Router::runAfter(
+            request,
+            Router::render(request, make400(request, bodyContentTypeError)),
+            middlewares
+        );
     }
 
     try {

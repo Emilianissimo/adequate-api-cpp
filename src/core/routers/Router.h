@@ -15,15 +15,28 @@ public:
     using RouteFn = std::function<net::awaitable<Outcome>(Request&)>;
     using MethodMap = std::unordered_map<http::verb, RouteFn>;
     
-    Router& add(http::verb method, std::string path, RouteFn fn);
+    Router& add(
+        http::verb method,
+        const std::string& path,
+        RouteFn fn,
+        const std::vector<std::string>& allowedContentTypes
+    );
 
-    Router& get(std::string path, RouteFn fn) { return add(http::verb::get, std::move(path), std::move(fn)); };
-    Router& head(std::string path, RouteFn fn) { return add(http::verb::head, std::move(path), std::move(fn)); };
-    Router& options(std::string path, RouteFn fn) { return add(http::verb::options, std::move(path), std::move(fn)); };
-    Router& post(std::string path, RouteFn fn) { return add(http::verb::post, std::move(path), std::move(fn)); };
-    Router& put(std::string path, RouteFn fn) { return add(http::verb::put, std::move(path), std::move(fn)); };
-    Router& patch(std::string path, RouteFn fn) { return add(http::verb::patch, std::move(path), std::move(fn)); };
-    Router& delete_(std::string path, RouteFn fn) { return add(http::verb::delete_, std::move(path), std::move(fn)); };
+    Router& get(std::string path, RouteFn fn) { return add(http::verb::get, std::move(path), std::move(fn), {}); };
+    Router& head(std::string path, RouteFn fn) { return add(http::verb::head, std::move(path), std::move(fn), {}); };
+    Router& options(std::string path, RouteFn fn) { return add(http::verb::options, std::move(path), std::move(fn), {}); };
+    Router& post(std::string path, RouteFn fn, const std::vector<std::string> &allowedContentTypes = {"application/json"}) {
+        return add(http::verb::post, std::move(path), std::move(fn), allowedContentTypes);
+    };
+    Router& put(std::string path, RouteFn fn, const std::vector<std::string> &allowedContentTypes = {"application/json"}) {
+        return add(http::verb::put, std::move(path), std::move(fn), allowedContentTypes);
+    };
+    Router& patch(std::string path, RouteFn fn, const std::vector<std::string> &allowedContentTypes = {"application/json"}) {
+        return add(http::verb::patch, std::move(path), std::move(fn), allowedContentTypes);
+    };
+    Router& delete_(std::string path, RouteFn fn, const std::vector<std::string> &allowedContentTypes = {"application/json"}) {
+        return add(http::verb::delete_, std::move(path), std::move(fn), allowedContentTypes);
+    };
 
     /// Use globally
     Router& use(std::shared_ptr<MiddlewareInterface> middleware);
@@ -38,6 +51,7 @@ private:
         std::vector<std::string> paramNames;
         MethodMap methods;
         std::string original;
+        std::unordered_map<http::verb, std::vector<std::string>> allowedContentTypes;
     };
     std::vector<RouteEntry> table_;
 
@@ -48,8 +62,11 @@ private:
     [[nodiscard]] std::vector<std::shared_ptr<MiddlewareInterface>> collectMiddlewaresFor(const std::string& path) const;
 
     static std::string normalizeTarget(const Request& request);
+    static Outcome make400(const Request& request, const std::string& error);
     static Outcome make404(const Request& request);
     static Outcome make405(const Request& request, const MethodMap& mm);
+    static Outcome make413(const Request& request, const MethodMap& mm);
+    static Outcome make415(const Request& request, const MethodMap& mm);
     static Outcome make500(const Request& request, std::string& err);
     static Outcome makeOptionsAllow(const Request& request, const MethodMap& mm);
 
