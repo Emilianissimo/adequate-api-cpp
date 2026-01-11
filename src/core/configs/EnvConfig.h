@@ -10,6 +10,8 @@ struct EnvConfig {
     uint16_t redis_port = 6379;
     std::string redis_password;
     std::string secret_key;
+    uint64_t file_upload_limit_size;
+    std::string multipart_adapter;
 
     static EnvConfig load();
 };

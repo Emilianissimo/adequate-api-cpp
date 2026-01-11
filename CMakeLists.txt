@@ -22,6 +22,7 @@ FetchContent_MakeAvailable(jwt-cpp)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(Poco REQUIRED Net Foundation)
 
 # For docker and linux CLION
 if(UNIX AND NOT APPLE)
@@ -45,6 +46,8 @@ if(UNIX AND NOT APPLE)
         OpenSSL::Crypto
         ${PostgreSQL_LIBRARIES}
         pthread
+        Poco::Net
+        Poco::Foundation
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src
@@ -85,6 +88,8 @@ elseif(APPLE)
         OpenSSL::Crypto
         ${PostgreSQL_LIBRARIES}
         pthread
+        Poco::Net
+        Poco::Foundation
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src
@@ -113,6 +118,8 @@ elseif(WIN32)
         OpenSSL::Crypto
         ${PostgreSQL_LIBRARIES}
         pthread
+        Poco::Net
+        Poco::Foundation
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src

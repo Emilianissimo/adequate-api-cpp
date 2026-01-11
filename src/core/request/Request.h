@@ -3,6 +3,13 @@
 #include <boost/url.hpp>
 #include <unordered_map>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <vector>
+#include <optional>
+#include <stdexcept>
+
+#include "core/configs/EnvConfig.h"
+#include "core/multipart/MultipartAdapterFactory.h"
 
 namespace http = boost::beast::http;
 
@@ -18,6 +25,7 @@ struct MultipartForm {
     std::unordered_map<std::string, std::string> fields;
 };
 
+
 class Request {
 public:
     std::optional<int> user_id;
@@ -25,7 +33,7 @@ public:
 
     using RawRequest = http::request<http::string_body>;
 
-    explicit Request(RawRequest req) : req_(std::move(req)) {}
+    explicit Request(RawRequest req, const EnvConfig& env) : req_(std::move(req)), env_(env) {}
 
     [[nodiscard]] const RawRequest& raw() const { return req_; }
     RawRequest& raw() { return req_; }
@@ -81,65 +89,23 @@ public:
     }
 
     void parseMultipart() {
-        std::string ct = content_type();
-        if (ct.find("multipart/form-data") == std::string::npos)
-            throw std::runtime_error("Content-Type is not multipart");
+        const auto adapter = MultipartAdapterFactory::create(env_.multipart_adapter);
 
-        // boundary=...
-        auto pos = ct.find("boundary=");
-        if (pos == std::string::npos)
-            throw std::runtime_error("multipart: boundary not found");
-
-        std::string boundary = "--" + ct.substr(pos + 9);
-        std::string bodyStr = req_.body();
-
+        auto parts = adapter->parse(content_type(), body());
         MultipartForm form;
 
-        size_t start = bodyStr.find(boundary);
-        if (start == std::string::npos)
-            throw std::runtime_error("multipart: boundary missing in body");
+        for (auto& p : parts) {
+            if (!p.filename.empty()) {
+                MultipartPart file;
+                file.name = p.name;
+                file.filename = p.filename;
+                file.contentType = p.contentType;
+                file.data.assign(p.data.begin(), p.data.end());
 
-        start += boundary.size();
-
-        while (true) {
-            size_t headerEnd = bodyStr.find("\r\n\r\n", start);
-            if (headerEnd == std::string::npos) break;
-
-            std::string headerBlock = bodyStr.substr(start, headerEnd - start);
-
-            size_t namePos = headerBlock.find("name=\"");
-            if (namePos == std::string::npos) break;
-
-            namePos += 6;
-            size_t nameEnd = headerBlock.find("\"", namePos);
-            std::string name = headerBlock.substr(namePos, nameEnd - namePos);
-
-            size_t filenamePos = headerBlock.find("filename=\"");
-            std::string filename;
-            if (filenamePos != std::string::npos) {
-                filenamePos += 10;
-                size_t filenameEnd = headerBlock.find("\"", filenamePos);
-                filename = headerBlock.substr(filenamePos, filenameEnd - filenamePos);
-            }
-
-            size_t contentStart = headerEnd + 4;
-            size_t contentEnd = bodyStr.find(boundary, contentStart);
-            if (contentEnd == std::string::npos) break;
-
-            std::string dataStr = bodyStr.substr(contentStart, contentEnd - contentStart - 2);
-
-            if (!filename.empty()) {
-                MultipartPart part;
-                part.name = name;
-                part.filename = filename;
-                part.data.assign(dataStr.begin(), dataStr.end());
-                form.files[name] = std::move(part);
+                form.files[file.name] = std::move(file);
             } else {
-                form.fields[name] = dataStr;
+                form.fields[p.name] = p.data;
             }
-
-            start = contentEnd + boundary.size();
-            if (bodyStr.substr(start, 2) == "--") break; // end
         }
 
         multipart_ = std::move(form);
@@ -147,5 +113,6 @@ public:
 
 private:
     RawRequest req_;
+    EnvConfig env_;
     std::optional<MultipartForm> multipart_;
 };

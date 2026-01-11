@@ -22,14 +22,21 @@ using net::detached;
 using net::use_awaitable;
 using RawRequest = http::request<http::string_body>;
 
-static awaitable<void> session(tcp::socket socket, Router& router) {
+static awaitable<void> session(tcp::socket socket, Router& router, const EnvConfig& env) {
+    bool shouldWriteError = false;
+    Response errorResponse;
     try {
         beast::flat_buffer buffer;
         for (;;) {
-            RawRequest raw;
-            co_await http::async_read(socket, buffer, raw, use_awaitable);
+            http::request_parser<http::string_body> parser;
+            // Body limit
+            parser.body_limit(env.file_upload_limit_size);
 
-            Request req(std::move(raw));
+            co_await http::async_read(socket, buffer, parser, use_awaitable);
+
+            RawRequest raw = parser.release();
+
+            Request req(std::move(raw), env);
             Response res = co_await router.dispatch(req);
             bool keep = res.keep_alive();
 
@@ -41,14 +48,30 @@ static awaitable<void> session(tcp::socket socket, Router& router) {
                 break;
             }
         }
-    } catch (const std::exception&) {
+    } catch (const boost::system::system_error& se) {
+        if (se.code() == http::error::body_limit) {
+            shouldWriteError = true;
+
+            errorResponse = {http::status::payload_too_large, 11};
+            errorResponse.set(http::field::content_type, "text/plain");
+            errorResponse.keep_alive(false);              // важно
+            errorResponse.body() = "Payload too large";
+            errorResponse.prepare_payload();
+        }
+    } catch (const std::exception& ex) {}
+    if (shouldWriteError) {
+        boost::system::error_code ec;
+        co_await http::async_write(socket, errorResponse,
+                                  boost::asio::redirect_error(use_awaitable, ec));
+    }
+    {
         beast::error_code ec;
         socket.shutdown(tcp::socket::shutdown_send, ec);
     }
     co_return;
 }
 
-static awaitable<void> listener(const std::string& host, const uint16_t port, Router& router) {
+static awaitable<void> listener(const std::string& host, const uint16_t port, Router& router, const EnvConfig& env) {
     const auto exec = co_await net::this_coro::executor;
 
     tcp::endpoint ep{ net::ip::make_address(host), port };
@@ -57,7 +80,7 @@ static awaitable<void> listener(const std::string& host, const uint16_t port, Ro
     for (;;) {
         tcp::socket sock(exec);
         co_await acc.async_accept(sock, use_awaitable);
-        co_spawn(exec, session(std::move(sock), router), detached);
+        co_spawn(exec, session(std::move(sock), router, env), detached);
     }
 }
 
@@ -66,7 +89,7 @@ int Bootstrap::run(boost::asio::io_context& ioc, const EnvConfig& env, Router& r
         net::signal_set signals(ioc, SIGINT, SIGTERM);
         signals.async_wait([&](auto, auto){ ioc.stop(); });
 
-        co_spawn(ioc, listener(env.host, env.port, router), detached);
+        co_spawn(ioc, listener(env.host, env.port, router, env), detached);
         std::cout << "Listening on http://" << env.host << ":" << env.port << "\n";
 
         ioc.run();

@@ -27,6 +27,12 @@ private:
     DbErrorCode code_;
 };
 
+class MultipartError final : public std::runtime_error {
+public:
+    explicit MultipartError(const std::string& message)
+        : std::runtime_error(message) {}
+};
+
 class ValidationError final : public std::runtime_error {
 public:
     explicit ValidationError(const std::string& message)
