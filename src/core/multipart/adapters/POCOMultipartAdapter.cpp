@@ -2,7 +2,7 @@
 // Created by Emil Erofeevskiy on 11/01/26.
 //
 
-#include "../POCOMultipartAdapter.h"
+#include "POCOMultipartAdapter.h"
 #include <Poco/Net/MediaType.h>
 #include <Poco/Net/MultipartReader.h>
 #include <Poco/Net/MessageHeader.h>

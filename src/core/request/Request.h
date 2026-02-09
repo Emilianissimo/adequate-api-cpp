@@ -82,7 +82,8 @@ public:
 
     void ensureJsonValid() const {
         try {
-            nlohmann::json::parse(req_.body());
+            const auto j = nlohmann::json::parse(req_.body());
+            (void)j;
         } catch (const std::exception& e) {
             throw std::runtime_error(std::string("Invalid JSON: ") + e.what());
         }

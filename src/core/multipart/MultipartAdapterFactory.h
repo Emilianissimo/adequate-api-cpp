@@ -6,7 +6,7 @@
 #define BEAST_API_MULTIPARTADAPTERFACTORY_H
 
 #include "string"
-#include "adapters/POCOMultipartAdapter.h"
+#include "core/multipart/adapters/POCOMultipartAdapter.h"
 #include "core/interfaces/MultipartAdapterInterface.h"
 
 using MultipartParseFn =
