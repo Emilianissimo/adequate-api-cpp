@@ -17,6 +17,23 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
     GIT_TAG v0.7.1
 )
+
+if(WIN32)
+    set(OPENSSL_ROOT_DIR "C:/msys64/ucrt64" CACHE PATH "OpenSSL root")
+    set(JWT_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(JWT_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+    # Let find_package(CONFIG) and find modules discover MSYS2 prefix
+    list(PREPEND CMAKE_PREFIX_PATH "C:/msys64/ucrt64")
+
+    # PostgreSQL (libpq) explicit hints
+    set(PostgreSQL_INCLUDE_DIR "C:/msys64/ucrt64/include" CACHE PATH "" FORCE)
+    set(PostgreSQL_LIBRARY     "C:/msys64/ucrt64/lib/libpq.dll.a" CACHE FILEPATH "" FORCE)
+
+    # Some FindPostgreSQL.cmake variants also check these:
+    set(PostgreSQL_LIBRARY_DIR "C:/msys64/ucrt64/lib" CACHE PATH "" FORCE)
+endif()
+
 FetchContent_MakeAvailable(jwt-cpp)
 
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -117,7 +134,7 @@ elseif(WIN32)
         OpenSSL::SSL
         OpenSSL::Crypto
         ${PostgreSQL_LIBRARIES}
-        pthread
+        # pthread
         Poco::Net
         Poco::Foundation
     )
