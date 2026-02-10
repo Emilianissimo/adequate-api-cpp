@@ -37,7 +37,7 @@ static awaitable<void> session(tcp::socket socket, Router& router, const EnvConf
             RawRequest raw = parser.release();
 
             Request req(std::move(raw), env);
-            Response res = co_await router.dispatch(req);
+            Response res = co_await router.dispatch(req, env);
             bool keep = res.keep_alive();
 
             co_await http::async_write(socket, res, use_awaitable);

@@ -67,7 +67,7 @@ static std::string buildAllowHeader(const Router::MethodMap& mm) {
 }
 
 Outcome Router::make400(const Request& request, const std::string& error) {
-    const JsonResult result{json{{"error", error}}, http::status::not_found, false};
+    const JsonResult result{json{{"error", error}}, http::status::bad_request, false};
     return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
 }
 
@@ -198,7 +198,7 @@ Router::RouteEntry Router::compileRoute(const std::string& tmpl)
     return {std::regex(regexStr), params, {}, tmpl};
 }
 
-net::awaitable<Response> Router::dispatch(Request& request) const {
+net::awaitable<Response> Router::dispatch(Request& request, const EnvConfig& env) const {
     LoggerSingleton::get().info("Router::dispatch: called", {
         {"method", request.method()},
         {"target", request.target()}
@@ -210,6 +210,7 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
     auto middlewares = collectMiddlewaresFor(path);
 
     const MethodMap* methods = nullptr;
+    const RouteEntry* matchedEntry = nullptr;
     for (auto& entry : table_)
     {
         if (std::smatch match; std::regex_match(path, match, entry.regex))
@@ -221,6 +222,7 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
             }
             request.path_params = std::move(params);
 
+            matchedEntry = &entry;
             methods = &entry.methods;
             break;
         }
@@ -251,11 +253,10 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
         co_return co_await Router::runAfter(request, Router::render(request, Router::make405(request, *methods)), middlewares);
     }
 
-    auto& entry = *ranges::find_if(table_, [&](const RouteEntry& e){ return e.methods.count(request.method()); });
-
     std::vector<std::string> allowed;
-    if (entry.allowedContentTypes.contains(request.method())) {
-        allowed = entry.allowedContentTypes.at(request.method());
+
+    if (matchedEntry && matchedEntry->allowedContentTypes.contains(request.method())) {
+        allowed = matchedEntry->allowedContentTypes.at(request.method());
     }
 
     std::string ct = request.content_type();
@@ -287,14 +288,20 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
     }
 
     // DoS protection
-    constexpr size_t MAX_BODY_SIZE = 20 * 1024 * 1024;
-    if (request.raw().body().size() > MAX_BODY_SIZE) {
+    if (request.raw().body().size() > env.file_upload_limit_size) {
         co_return co_await Router::runAfter(
             request,
             Router::render(request, make413(request, *methods)),
             middlewares
         );
     }
+
+    std::string bodyContentTypeError;
+
+    LoggerSingleton::get().debug("Router::dispatch: Request content-type", {
+        {"ct", ct},
+        {"size", (int)request.raw().body().size()}
+    });
 
     try {
         if (ct.find("application/json") != std::string::npos) {
@@ -305,10 +312,10 @@ net::awaitable<Response> Router::dispatch(Request& request) const {
         }
     }
     catch (const std::exception& e) {
-        std::string bodyContentTypeError = e.what();
+        bodyContentTypeError = e.what();
     }
 
-    if (std::string bodyContentTypeError; !bodyContentTypeError.empty()) {
+    if (!bodyContentTypeError.empty()) {
         co_return co_await Router::runAfter(
             request,
             Router::render(request, make400(request, bodyContentTypeError)),

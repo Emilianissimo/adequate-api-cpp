@@ -102,7 +102,24 @@ net::awaitable<Outcome> UsersController::update(Request& request) const {
         {"target", request.target()}
     });
 
-    nlohmann::json body = request.json();
+    nlohmann::json body;
+
+    /// Multipart json fields selection
+    if (request.content_type().find("multipart/form-data") != std::string::npos) {
+        const auto& f = request.multipart().fields;
+
+        if (auto it = f.find("username"); it != f.end())
+            body["username"] = it->second;
+
+        if (auto it = f.find("password"); it != f.end())
+            body["password"] = it->second;
+
+        if (auto it = f.find("email"); it != f.end())
+            body["email"] = it->second;
+    } else {
+        body = request.json();
+    }
+
     UserUpdateSerializer serializer;
     std::optional<std::string> error_msg;
 

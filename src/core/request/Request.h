@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include "core/configs/EnvConfig.h"
+#include "core/loggers/LoggerSingleton.h"
 #include "core/multipart/MultipartAdapterFactory.h"
 
 namespace http = boost::beast::http;
@@ -96,6 +97,19 @@ public:
         MultipartForm form;
 
         for (auto& p : parts) {
+            LoggerSingleton::get().info("Request::parseMultipart", {
+                {"name", p.name},
+                {"filename", p.filename},
+                {"ctype", p.contentType},
+                {"size", std::to_string(p.data.size())}
+            });
+            if (p.filename.empty()) {
+                std::string s(p.data.begin(), p.data.end());
+                LoggerSingleton::get().debug("Request::parseMultipart: MP field value", {
+                    {"name", p.name},
+                    {"value_dbg", s.substr(0, 80)}
+                });
+            }
             if (!p.filename.empty()) {
                 MultipartPart file;
                 file.name = p.name;

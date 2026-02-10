@@ -47,7 +47,6 @@ std::vector<Part> POCOMultipartAdapter::parse(const std::string& contentType, co
             if (cd.empty())
                 throw MultipartError("Multipart part missing Content-Disposition");
 
-            // строго проверяем первый токен
             if (const auto first = trimCopy(cd.substr(0, cd.find(';'))); first != "form-data")
                 throw MultipartError("Unsupported Content-Disposition: " + cd);
 
