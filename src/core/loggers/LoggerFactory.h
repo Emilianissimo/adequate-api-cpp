@@ -1,5 +1,5 @@
 #pragma once
-#include "../interfaces/LoggerInterface.h"
+#include "interfaces/LoggerInterface.h"
 #include "core/loggers/strategies/ConsoleLoggerStrategy.h"
 #include <memory>
 #include <string>

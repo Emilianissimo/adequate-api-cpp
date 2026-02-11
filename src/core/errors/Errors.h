@@ -38,3 +38,4 @@ public:
     explicit ValidationError(const std::string& message)
         : std::runtime_error(message) {}
 };
+

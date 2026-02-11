@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/interfaces/HttpInterface.h"
+#include "../http/interfaces/HttpInterface.h"
 #include "core/request/Request.h"
 #include "core/interfaces/MiddlewareInterface.h"
 #include <unordered_map>

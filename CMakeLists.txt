@@ -121,7 +121,10 @@ elseif(WIN32)
         src/*.cpp
     )
 
-    add_executable(app ${APP_SOURCES})
+    add_executable(app ${APP_SOURCES}
+            src/core/file_system/FileSystemService.cpp
+            src/core/file_system/FileSystemService.h
+            src/core/file_system/errors/FileSystemErrors.h)
 
     target_link_libraries(app
         PRIVATE

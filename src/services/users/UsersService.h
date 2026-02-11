@@ -4,7 +4,7 @@
 #include "serializers/users/UserCreateSerializer.h"
 #include "serializers/users/UserUpdateSerializer.h"
 #include "filters/users/UserListFilter.h"
-#include "core/interfaces/HttpInterface.h"
+#include "../../core/http/interfaces/HttpInterface.h"
 #include "repositories/users/UsersRepository.h"
 
 class UsersService {

@@ -1,5 +1,5 @@
 #pragma once
-#include "core/interfaces/FiltersInterface.h"
+#include "interfaces/FiltersInterface.h"
 
 class BaseFilter : public FiltersInterface {
 public:

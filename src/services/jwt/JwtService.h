@@ -7,7 +7,7 @@
 
 #include "core/configs/EnvConfig.h"
 #include "entities/UserEntity.h"
-#include "core/interfaces/HttpInterface.h"
+#include "../../core/http/interfaces/HttpInterface.h"
 #include "repositories/users/UsersRepository.h"
 
 enum class JwtError {

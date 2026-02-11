@@ -1,5 +1,5 @@
 #pragma once
-#include "core/interfaces/HttpInterface.h"
+#include "../core/http/interfaces/HttpInterface.h"
 #include "core/request/Request.h"
 #include "core/http/ResponseTypes.h"
 

@@ -6,7 +6,7 @@
 #ifndef BEAST_API_AUTHENTICATIONMIDDLEWARE_H
 #define BEAST_API_AUTHENTICATIONMIDDLEWARE_H
 #include "core/interfaces/MiddlewareInterface.h"
-#include "core/interfaces/HttpInterface.h"
+#include "../core/http/interfaces/HttpInterface.h"
 #include "services/jwt/JwtService.h"
 #include "services/users/UsersService.h"
 

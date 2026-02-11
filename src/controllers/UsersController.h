@@ -2,14 +2,14 @@
 #include "core/request/Request.h"
 #include "core/http/ResponseTypes.h"
 #include "services/users/UsersService.h"
-#include "core/interfaces/HttpInterface.h"
+#include "../core/http/interfaces/HttpInterface.h"
 
 class UsersController {
 public:
     explicit UsersController(UsersService& service) : service_(service) {}
-    net::awaitable<Outcome> index(Request& request) const;
-    net::awaitable<Outcome> store(Request& request) const;
-    net::awaitable<Outcome> update(Request& request) const;
+    net::awaitable<Outcome> index(const Request& request) const;
+    net::awaitable<Outcome> store(const Request& request) const;
+    static net::awaitable<Outcome> update(Request& request);
 
 private:
     UsersService& service_;

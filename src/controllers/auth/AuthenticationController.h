@@ -4,7 +4,7 @@
 
 #include "core/request/Request.h"
 #include "core/http/ResponseTypes.h"
-#include "core/interfaces/HttpInterface.h"
+#include "../../core/http/interfaces/HttpInterface.h"
 #include "services/auth/AuthenticationService.h"
 #include "services/users/UsersService.h"
 

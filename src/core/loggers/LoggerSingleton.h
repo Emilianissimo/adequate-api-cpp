@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "../interfaces/LoggerInterface.h"
+#include "interfaces/LoggerInterface.h"
 
 class LoggerSingleton {
 public:

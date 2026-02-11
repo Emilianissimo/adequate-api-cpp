@@ -6,7 +6,7 @@
 #include "core/loggers/LoggerSingleton.h"
 #include "filters/users/UserListFilter.h"
 
-net::awaitable<Outcome> UsersController::index(Request& request) const {
+net::awaitable<Outcome> UsersController::index(const Request& request) const {
     LoggerSingleton::get().debug("UsersController::index: called", {
         {"method", request.method()},
         {"target", request.target()}
@@ -32,13 +32,13 @@ net::awaitable<Outcome> UsersController::index(Request& request) const {
     co_return result;
 }
 
-net::awaitable<Outcome> UsersController::store(Request& request) const {
+net::awaitable<Outcome> UsersController::store(const Request& request) const {
     LoggerSingleton::get().debug("UsersController::store: called", {
         {"method", request.method()},
         {"target", request.target()}
     });
 
-    nlohmann::json body = request.json();
+    const nlohmann::json body = request.json();
     UserCreateSerializer serializer;
     std::optional<std::string> error_msg;
 
@@ -93,7 +93,8 @@ net::awaitable<Outcome> UsersController::store(Request& request) const {
     };
 }
 
-net::awaitable<Outcome> UsersController::update(Request& request) const {
+net::awaitable<Outcome> UsersController::update(Request& request)
+{
     std::string id_str = request.path_params.at("id");
     int id = std::stoi(id_str);
 
@@ -151,7 +152,7 @@ net::awaitable<Outcome> UsersController::update(Request& request) const {
 
     UserCreateResponseSerializer user;
     try {
-        co_await service_.update(serializer);
+        co_await UsersService::update(serializer);
     } catch (const ValidationError& e) {
         error_msg = e.what();
         LoggerSingleton::get().warn(
