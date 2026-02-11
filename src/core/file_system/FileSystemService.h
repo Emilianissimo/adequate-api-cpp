@@ -71,11 +71,13 @@ public:
         IncomingFile file
     ) const;
 
-    void remove(std::filesystem::path relativePath) const;
+    void remove(const std::filesystem::path& relativePath) const;
 
     bool exists(std::filesystem::path relativePath) const;
 
     [[nodiscard]] const Options& options() const noexcept { return opts_; };
+
+    static std::filesystem::path buildRelativeDir(std::string_view entityName, std::string_view entityId);
 
 private:
     Options opts_;
@@ -87,7 +89,6 @@ private:
     static bool isValidEntityName(std::string_view input);
     bool isValidEntityId(std::string_view input) const;
 
-    static std::filesystem::path buildRelativeDir(std::string_view entityName, std::string_view entityId);
     static std::string pickAllowedExtension(const Options& opts, std::string_view originalFileName);
 
     static std::string randomHex(std::size_t bytesLen);

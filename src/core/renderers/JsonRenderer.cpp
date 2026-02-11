@@ -14,6 +14,14 @@ Response JsonRenderer::jsonResponse(
     response.keep_alive(keepAlive);
 
     response.body() = (dumpIndent >= 0) ? body.dump(dumpIndent) : body.dump();
+
+    if (status == http::status::no_content) {
+        response.body() = "";
+        response.content_length(0);
+        response.erase(http::field::content_type);
+        return response;
+    }
+
     response.prepare_payload();
     return response;
 }

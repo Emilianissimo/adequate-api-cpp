@@ -2,11 +2,17 @@
 
 #include <stdexcept>
 
+#include "core/loggers/LoggerSingleton.h"
+
 #if defined(HAVE_LIBMAGIC) && HAVE_LIBMAGIC
     #include <magic.h>
 #endif
 
 std::string MagicMimeDetector::detectMime(const std::vector<std::uint8_t>& bytes) const {
+    LoggerSingleton::get().info("MagicMimeDetector::detectMime: called", {
+        {"bytes_size", bytes.size()},
+    });
+
     if (bytes.empty()) return {};
 
 #if defined(HAVE_LIBMAGIC) && HAVE_LIBMAGIC

@@ -106,6 +106,8 @@ net::awaitable<Outcome> UsersController::update(const Request& request) const
     nlohmann::json body;
 
     /// Multipart json fields selection
+    /// NOTE: For v1 we unify multipart and json manually.
+    /// Future versions may move this to Request layer.
     if (request.content_type().find("multipart/form-data") != std::string::npos) {
         const auto& f = request.multipart().fields;
 
