@@ -1,4 +1,7 @@
 #pragma once
+#include <cstdint>
+#include <vector>
+
 #include "interfaces/FiltersInterface.h"
 
 class BaseFilter : public FiltersInterface {

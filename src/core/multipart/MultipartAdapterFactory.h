@@ -7,7 +7,7 @@
 
 #include "string"
 #include "core/multipart/adapters/POCOMultipartAdapter.h"
-#include "interfaces/MultipartAdapterInterface.h"
+#include "core/multipart/interfaces/MultipartAdapterInterface.h"
 
 using MultipartParseFn =
     std::vector<Part>(*)(const std::string&, const std::string&);

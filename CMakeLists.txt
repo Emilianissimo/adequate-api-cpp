@@ -41,6 +41,9 @@ find_package(PostgreSQL REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Poco REQUIRED Net Foundation)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBMAGIC REQUIRED IMPORTED_TARGET libmagic)
+
 # For docker and linux CLION
 if(UNIX AND NOT APPLE)
     find_package(Boost REQUIRED COMPONENTS system thread url)
@@ -65,6 +68,7 @@ if(UNIX AND NOT APPLE)
         pthread
         Poco::Net
         Poco::Foundation
+        PkgConfig::LIBMAGIC
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src
@@ -107,6 +111,7 @@ elseif(APPLE)
         pthread
         Poco::Net
         Poco::Foundation
+        PkgConfig::LIBMAGIC
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src
@@ -124,7 +129,9 @@ elseif(WIN32)
     add_executable(app ${APP_SOURCES}
             src/core/file_system/FileSystemService.cpp
             src/core/file_system/FileSystemService.h
-            src/core/file_system/errors/FileSystemErrors.h)
+            src/core/file_system/errors/FileSystemErrors.h
+            src/core/file_system/magic_mime/MagicMimeDetector.cpp
+            src/core/file_system/magic_mime/MagicMimeDetector.h)
 
     target_link_libraries(app
         PRIVATE
@@ -140,6 +147,7 @@ elseif(WIN32)
         # pthread
         Poco::Net
         Poco::Foundation
+        PkgConfig::LIBMAGIC
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src
@@ -148,3 +156,5 @@ elseif(WIN32)
         ${Boost_INCLUDE_DIRS}
     )
 endif()
+
+target_compile_definitions(app PRIVATE HAVE_LIBMAGIC=1)

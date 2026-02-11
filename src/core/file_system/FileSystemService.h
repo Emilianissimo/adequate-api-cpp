@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <filesystem>
 #include <string>
 #include <string_view>
@@ -16,9 +15,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/any_io_executor.hpp>
 
-namespace app
-{
-    struct StoredFileInfo
+struct StoredFileInfo
 {
     std::filesystem::path relativePath; // entity/id/file_name
     std::string storedFileName;
@@ -105,7 +102,5 @@ private:
 
     static void validateFile(const Options& opts, const IncomingFile& file);
 };
-
-}
 
 #endif //BEAST_API_FILESYSTEMSERVICE_H

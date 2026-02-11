@@ -3,9 +3,11 @@ FROM ubuntu:22.04
 # Deps
 RUN apt-get update && apt-get install -y \
     build-essential g++ cmake ninja-build make git curl ca-certificates \
+    pkg-config \
     libssl-dev zlib1g-dev libpq-dev \
     nlohmann-json3-dev \
     libpoco-dev \
+    libmagic-dev \
  && rm -rf /var/lib/apt/lists/*
 
 # --- Boost 1.84+ (for http::message_generator and co_await) ---

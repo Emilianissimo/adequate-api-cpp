@@ -93,7 +93,7 @@ net::awaitable<Outcome> UsersController::store(const Request& request) const {
     };
 }
 
-net::awaitable<Outcome> UsersController::update(Request& request)
+net::awaitable<Outcome> UsersController::update(const Request& request) const
 {
     std::string id_str = request.path_params.at("id");
     int id = std::stoi(id_str);
@@ -152,7 +152,7 @@ net::awaitable<Outcome> UsersController::update(Request& request)
 
     UserCreateResponseSerializer user;
     try {
-        co_await UsersService::update(serializer);
+        co_await service_.update(serializer);
     } catch (const ValidationError& e) {
         error_msg = e.what();
         LoggerSingleton::get().warn(

@@ -8,7 +8,7 @@
 #include <sstream>
 #include <Poco/Net/MessageHeader.h>
 
-#include "core/interfaces/MultipartAdapterInterface.h"
+#include "core/multipart/interfaces/MultipartAdapterInterface.h"
 
 
 class POCOMultipartAdapter final : public MultipartAdapterInterface {

@@ -9,7 +9,7 @@ public:
     explicit UsersController(UsersService& service) : service_(service) {}
     net::awaitable<Outcome> index(const Request& request) const;
     net::awaitable<Outcome> store(const Request& request) const;
-    static net::awaitable<Outcome> update(Request& request);
+    net::awaitable<Outcome> update(const Request& request) const;
 
 private:
     UsersService& service_;
