@@ -7,8 +7,12 @@ struct BaseSerializer {
         return Derived::fromEntity(entity);
     }
 
-    EntityT toEntity() const {
+    EntityT toEntity() const & {
         return static_cast<const Derived*>(this)->toEntity();
+    }
+
+    EntityT toEntity() && {
+        return static_cast<Derived*>(this)->toEntity();
     }
 
     nlohmann::json to_json() const {

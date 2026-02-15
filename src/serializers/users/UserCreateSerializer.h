@@ -49,13 +49,22 @@ public:
         return serializer;
     }
 
-    UserEntity toEntity() {
-        LoggerSingleton::get().info("UserCreateSerializer::toEntity: started");
-        UserEntity userEntity;
-        userEntity.username = this->username;
-        userEntity.email = this->email;
-        userEntity.password = this->password;
-        return userEntity;
+    [[nodiscard]] UserEntity toEntity() && {
+        LoggerSingleton::get().info("UserCreateSerializer::toEntity (move)");
+        UserEntity entity;
+        entity.username = std::move(username);
+        entity.email = std::move(email);
+        entity.password = std::move(password);
+        return entity;
+    }
+
+    [[nodiscard]] UserEntity toEntity() const & {
+        LoggerSingleton::get().info("UserCreateSerializer::toEntity (copy)");
+        UserEntity entity;
+        entity.username = username;
+        entity.email = email;
+        entity.password = password;
+        return entity;
     }
 
     friend void from_json(const nlohmann::json& j, UserCreateSerializer& s) {

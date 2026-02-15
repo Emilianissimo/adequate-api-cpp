@@ -15,16 +15,26 @@ public:
     std::optional<std::string> email;
     std::optional<std::string> password;
 
-    [[nodiscard]] UserEntity toEntity() const {
-        LoggerSingleton::get().info("UserUpdateSerializer::toEntity: started");
-        UserEntity userEntity;
-        userEntity.id = this->id;
-        userEntity.username = this->username;
-        userEntity.picture = this->picture;
-        userEntity.email = this->email;
-        userEntity.password = this->password;
+    [[nodiscard]] UserEntity toEntity() && {
+        LoggerSingleton::get().info("UserUpdateSerializer::toEntity (move)");
+        UserEntity entity;
+        entity.id = std::move(id);
+        entity.username = std::move(username);
+        entity.email = std::move(email);
+        entity.password = std::move(password);
+        entity.picture = std::move(picture);
+        return entity;
+    }
 
-        return userEntity;
+    [[nodiscard]] UserEntity toEntity() const & {
+        LoggerSingleton::get().info("UserUpdateSerializer::toEntity (copy)");
+        UserEntity entity;
+        entity.id = id;
+        entity.password = password;
+        entity.username = username;
+        entity.picture = picture;
+        entity.email = email;
+        return entity;
     }
 
     friend void from_json(const nlohmann::json& j, UserUpdateSerializer& s) {
