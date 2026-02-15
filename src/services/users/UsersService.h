@@ -4,7 +4,6 @@
 #include "serializers/users/UserCreateSerializer.h"
 #include "serializers/users/UserUpdateSerializer.h"
 #include "filters/users/UserListFilter.h"
-#include "../../core/http/interfaces/HttpInterface.h"
 #include "core/file_system/FileSystemService.h"
 #include "repositories/users/UsersRepository.h"
 #include <boost/asio/thread_pool.hpp>
@@ -23,10 +22,10 @@ public:
     blockingPool_(blockingPool),
     passwordHasher_(passwordHasher) {}
     net::awaitable<std::vector<UserSerializer>> list(UserListFilter& filters) const;
-    net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer& data) const;
+    net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer data) const;
     net::awaitable<bool> exists(UserFilter& filters) const;
 
-    net::awaitable<void> update(UserUpdateSerializer& data, IncomingFile& picture) const;
+    net::awaitable<void> update(UserUpdateSerializer data, IncomingFile picture) const;
 private:
     UsersRepository& repo_;
     FileSystemService& fs_;

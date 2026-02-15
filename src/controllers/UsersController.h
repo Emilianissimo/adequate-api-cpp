@@ -8,7 +8,7 @@
 class UsersController {
 public:
     explicit UsersController(UsersService& service) : service_(service) {}
-    net::awaitable<Outcome> index(const Request& request) const;
+    [[nodiscard]] net::awaitable<Outcome> index(const Request& request) const;
     net::awaitable<Outcome> store(const Request& request) const;
     net::awaitable<Outcome> update(const Request& request) const;
 

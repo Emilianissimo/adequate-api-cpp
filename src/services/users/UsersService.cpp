@@ -33,7 +33,7 @@ net::awaitable<std::vector<UserSerializer>> UsersService::list(UserListFilter& f
     co_return serializedUsers;
 }
 
-net::awaitable<UserCreateResponseSerializer> UsersService::create(UserCreateSerializer& data) const {
+net::awaitable<UserCreateResponseSerializer> UsersService::create(UserCreateSerializer data) const {
     LoggerSingleton::get().info("UsersService::create: called", {
         {"email", data.email},
         {"password", data.password},
@@ -42,13 +42,13 @@ net::awaitable<UserCreateResponseSerializer> UsersService::create(UserCreateSeri
     UserEntity user = data.toEntity();
     if (user.password.has_value())
     {
-        const std::string rawPwd = user.password.value();
-        // Offloading CPU bound hashing
+        auto pwdPtr = std::make_shared<std::string>(user.password.value());
         auto hasher = passwordHasher_; // copy shared_ptr
+
         auto hash = co_await async_offload(
-            blockingPool_.get_executor(),
-            [rawPwd, hasher]() {
-                return hasher->hash(rawPwd);
+        blockingPool_.get_executor(),
+            [pwdPtr, hasher]() {
+                return hasher->hash(*pwdPtr);
             }
         );
         user.password = std::move(hash);
@@ -74,7 +74,7 @@ net::awaitable<UserCreateResponseSerializer> UsersService::create(UserCreateSeri
     }
 }
 
-net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFile& picture) const
+net::awaitable<void> UsersService::update(UserUpdateSerializer data, IncomingFile picture) const
 {
     LoggerSingleton::get().info("UsersService::update: called", {
         {"id", data.id},
@@ -93,13 +93,12 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFi
 
     if (user.password.has_value())
     {
-        const std::string rawPwd = user.password.value();
-        // Offloading CPU bound hashing
+        auto pwdPtr = std::make_shared<std::string>(user.password.value());
         auto hasher = passwordHasher_; // copy shared_ptr
         auto hash = co_await async_offload(
             blockingPool_.get_executor(),
-            [rawPwd, hasher]() {
-                return hasher->hash(rawPwd);
+            [pwdPtr, hasher]() {
+                return hasher->hash(*pwdPtr);
             }
         );
         user.password = std::move(hash);
