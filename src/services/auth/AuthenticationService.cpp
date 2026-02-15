@@ -2,7 +2,7 @@
 
 #include "core/helpers/Offload.h"
 
-net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(LoginSerializer& data) const {
+net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(LoginSerializer data) const {
     LoggerSingleton::get().info("AuthenticationService::obtainTokens: called", {
         {"email", data.email},
         {"password", data.password},
@@ -15,15 +15,15 @@ net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(Logi
 
     LoggerSingleton::get().debug("AuthenticationService::obtainTokens: checking password");
 
-    const std::string plain = data.password;
-    const std::string stored = user.password.value();
-
+    auto plain = std::make_shared<std::string>(data.password);
+    auto stored = std::make_shared<std::string>(user.password.value());
     auto hasher = passwordHasher_; // copy shared_ptr
+
     auto [ok, needsRehash] = co_await async_offload(
         blockingPool_.get_executor(),
         [plain, stored, hasher]() {
             bool nr = false;
-            bool res = hasher->verify(plain, stored, &nr);
+            bool res = hasher->verify(*plain, *stored, &nr);
             return std::pair{res, nr};
         }
     );
@@ -48,18 +48,18 @@ net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(Logi
     co_return tokenPair;
 }
 
-net::awaitable<void> AuthenticationService::registerUser(RegisterSerializer& data) const {
+net::awaitable<void> AuthenticationService::registerUser(RegisterSerializer data) const {
     LoggerSingleton::get().info("AuthenticationService::registerUser: called", {
         {"email", data.email},
         {"username", data.username}
     });
     UserEntity user = data.toEntity();
-    const std::string rawPwd = user.password.value();
+    auto pwdPtr = std::make_shared<std::string>(user.password.value());
     auto hasher = passwordHasher_; // copy shared_ptr
     auto hash = co_await async_offload(
         blockingPool_.get_executor(),
-        [rawPwd, hasher]() {
-            return hasher->hash(rawPwd);
+        [pwdPtr, hasher]() {
+            return hasher->hash(*pwdPtr);
         }
     );
     user.password = std::move(hash);

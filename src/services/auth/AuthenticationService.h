@@ -20,8 +20,8 @@ public:
     jwtService_(jwtService),
     blockingPool_(blockingPool),
     passwordHasher_(passwordHasher) {}
-    net::awaitable<TokenResponseSerializer> obtainTokens(LoginSerializer& data) const;
-    net::awaitable<void> registerUser(RegisterSerializer& data) const;
+    net::awaitable<TokenResponseSerializer> obtainTokens(LoginSerializer data) const;
+    net::awaitable<void> registerUser(RegisterSerializer data) const;
 private:
     UsersRepository& usersRepository_;
     JwtService& jwtService_;

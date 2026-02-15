@@ -25,8 +25,17 @@ public:
         return serializer;
     }
 
-    [[nodiscard]] UserEntity toEntity() const {
-        LoggerSingleton::get().info("RegisterSerializer::toEntity");
+    [[nodiscard]] UserEntity toEntity() && {
+        LoggerSingleton::get().info("RegisterSerializer::toEntity (move)");
+        UserEntity entity;
+        entity.username = std::move(username);
+        entity.email = std::move(email);
+        entity.password = std::move(password);
+        return entity;
+    }
+
+    [[nodiscard]] UserEntity toEntity() const & {
+        LoggerSingleton::get().info("RegisterSerializer::toEntity (copy)");
         UserEntity entity;
         entity.username = username;
         entity.email = email;
@@ -51,9 +60,9 @@ public:
         if (!j.contains("email") || !j["email"].is_string() || j["email"].get<std::string>().empty()) {
             throw ValidationError("Email is required");
         }
-        if (!std::regex_match(j["email"].get<std::string>(), std::regex(R"(^[^@\s]+@[^@\s]+\.[^@\s]+$)"))) {
-            throw ValidationError("Email is invalid");
-        }
+        // if (!std::regex_match(j["email"].get<std::string>(), std::regex(R"(^[^@\s]+@[^@\s]+\.[^@\s]+$)"))) {
+        //     throw ValidationError("Email is invalid");
+        // }
 
         LoggerSingleton::get().debug("RegisterSerializer::from_json: checking password");
         if (!j.contains("password") || !j["password"].is_string() || j["password"].get<std::string>().size() < 6) {

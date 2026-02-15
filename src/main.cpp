@@ -19,12 +19,6 @@ int main() {
     EnvConfig env = EnvConfig::load();
     init_crypto_once();
 
-    {
-        app::security::SodiumPasswordHasher h{};
-        auto s = h.hash("bashmash");
-        LoggerSingleton::get().debug("test hash len=" + std::to_string(s.size()));
-    }
-
     // Singletons
     LoggerSingleton::init(
         LoggerFactory::create("console")

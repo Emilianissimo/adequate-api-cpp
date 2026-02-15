@@ -9,6 +9,7 @@
 #include "core/hashers/interfaces/PasswordHasherInterface.h"
 #include <sodium.h>
 #include <stdexcept>
+#include <memory>
 
 namespace app::security {
 
@@ -24,11 +25,11 @@ public:
         : params_(params) {}
 
     std::string hash(const std::string& password) const override {
-        char out[crypto_pwhash_STRBYTES];
+        auto out = std::make_unique<char[]>(crypto_pwhash_STRBYTES);
 
         // crypto_pwhash_str returns string: $argon2id$... (salt+params)
         if (crypto_pwhash_str(
-                out,
+                out.get(),
                 password.c_str(),
                 password.size(),
                 params_.opslimit,
@@ -36,7 +37,7 @@ public:
         {
             throw std::runtime_error("pwhash: out of memory / failed");
         }
-        return std::string(out);
+        return std::string(out.get());
     }
 
     bool verify(const std::string& password,

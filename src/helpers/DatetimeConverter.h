@@ -52,7 +52,7 @@ inline std::string to_iso_string(const time_point& tp) {
 #if defined(_WIN32)
     gmtime_s(&gmt, &t);
 #else
-    gmt = *std::gmtime(&t);
+    gmtime_r(&t, &gmt);
 #endif
 
     char buf[32];

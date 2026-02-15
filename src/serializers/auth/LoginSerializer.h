@@ -22,8 +22,16 @@ public:
         return serializer;
     }
 
-    UserEntity toEntity() const {
-        LoggerSingleton::get().info("LoginSerializer::toEntity");
+    [[nodiscard]] UserEntity toEntity() && {
+        LoggerSingleton::get().info("LoginSerializer::toEntity (move)");
+        UserEntity entity;
+        entity.email = std::move(email);
+        entity.password = std::move(password);
+        return entity;
+    }
+
+    [[nodiscard]] UserEntity toEntity() const & {
+        LoggerSingleton::get().info("LoginSerializer::toEntity (copy)");
         UserEntity entity;
         entity.email = email;
         entity.password = password;

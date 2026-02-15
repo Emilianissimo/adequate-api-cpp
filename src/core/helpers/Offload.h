@@ -1,43 +1,49 @@
-//
-// Created by user on 15.02.2026.
-//
-
 #ifndef BEAST_API_OFFLOAD_H
 #define BEAST_API_OFFLOAD_H
 
 #pragma once
 #include <boost/asio.hpp>
-// Needed includes for invoke result
-#include <utility>
-#include <type_traits>
+#include <future>
+#include <memory>
 
 namespace net = boost::asio;
 
+/**
+* Safe offload without migrating the coroutine frame.
+* 1. The coroutine remains on the IO thread.
+* 2. The task (lambda) is moved to the ThreadPool.
+* 3. The IO thread "sleeps" (awaitable timer) until the Future becomes ready.
+*/
 template <class Executor, class Fn>
 auto async_offload(Executor blockingEx, Fn fn)
-    -> net::awaitable<std::invoke_result_t<Fn&>>
+    -> net::awaitable<std::invoke_result_t<Fn>>
 {
-    using R = std::invoke_result_t<Fn&>;
+    using ResultType = std::invoke_result_t<Fn>;
 
-    // 1) save current executor
-    auto originalEx = co_await net::this_coro::executor;
+    auto promise = std::make_shared<std::promise<ResultType>>();
+    auto future = promise->get_future();
 
-    // 2) goto blocking pool
-    co_await net::post(blockingEx, net::use_awaitable);
+    net::post(blockingEx, [p = promise, func = std::move(fn)]() mutable {
+        try {
+            if constexpr (std::is_void_v<ResultType>) {
+                func();
+                p->set_value();
+            } else {
+                p->set_value(func());
+            }
+        } catch (...) {
+            p->set_exception(std::current_exception());
+        }
+    });
 
-    if constexpr (std::is_void_v<R>) {
-        std::invoke(fn);
-
-        // 3) return back
-        co_await net::post(originalEx, net::use_awaitable);
-        co_return;
-    } else {
-        R result = std::invoke(fn);
-
-        // 3) return back
-        co_await net::post(originalEx, net::use_awaitable);
-        co_return result;
+    net::steady_timer timer(co_await net::this_coro::executor);
+    
+    while (future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+        timer.expires_after(std::chrono::milliseconds(2)); // Небольшая задержка
+        co_await timer.async_wait(net::use_awaitable);
     }
+
+    co_return future.get();
 }
 
 #endif //BEAST_API_OFFLOAD_H

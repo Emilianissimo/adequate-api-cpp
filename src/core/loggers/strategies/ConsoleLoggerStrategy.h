@@ -4,16 +4,28 @@
 #include <chrono>
 #include <iomanip>
 #include <boost/algorithm/string/join.hpp>
+#include <mutex>
+#include <ctime>
 
 class ConsoleLoggerStrategy final : public LoggerInterface {
 public:
     void log(LogLevel level, const std::string& msg, const std::optional<std::map<std::string, std::any>>& params) override {
+        std::lock_guard<std::mutex> lk(m_);
+
         const auto now = std::chrono::system_clock::now();
         const auto t   = std::chrono::system_clock::to_time_t(now);
-        const std::tm tm = *std::localtime(&t);
+
+        std::tm tm{};
+#ifdef _WIN32
+        localtime_s(&tm, &t);
+#else
+        localtime_r(&t, &tm);
+#endif
 
         std::ostringstream oss;
-        oss << "[" << std::put_time(&tm, "%F %T") << "] " << levelToString(level) << ": " << msg;
+        oss << "[" << std::put_time(&tm, "%F %T") << "] "
+            << levelToString(level) << ": " << msg;
+
         if (params && !params->empty()) {
             oss << " | Params: ";
             bool first = true;
@@ -51,6 +63,7 @@ public:
     }
 
 private:
+    inline static std::mutex m_;
     static std::string levelToString(const LogLevel level) {
         switch (level) {
             case LogLevel::DEBUG: return "DEBUG";

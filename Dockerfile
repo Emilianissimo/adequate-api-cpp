@@ -20,7 +20,13 @@ RUN curl -L https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_DI
  && tar xf ${BOOST_DIR}.tar.bz2 \
  && cd ${BOOST_DIR} \
  && ./bootstrap.sh --with-libraries=system,filesystem,thread,url \
- && ./b2 -j$(nproc) cxxflags="-std=c++20" install \
+ && ./b2 -j$(nproc) \
+    variant=release \
+    link=shared,static \
+    threading=multi \
+    address-model=64 \
+    cxxflags="-std=c++20 -fPIC" \
+    install \
  && ldconfig \
  && cd / && rm -rf /tmp/${BOOST_DIR} /tmp/${BOOST_DIR}.tar.bz2
 
@@ -29,7 +35,10 @@ WORKDIR /work
 COPY CMakeLists.txt ./
 COPY src ./src
 
-RUN cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && \
+# Release or Debug
+RUN cmake -S . -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_CXX_FLAGS="-std=c++20" && \
     cmake --build build
 
 # Params (rewrites by .env/compose)
