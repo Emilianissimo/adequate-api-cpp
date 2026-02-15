@@ -1,5 +1,6 @@
 #include "AuthenticationService.h"
-#include <bcrypt/BCrypt.hpp>
+
+#include "core/helpers/Offload.h"
 
 net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(LoginSerializer& data) const {
     LoggerSingleton::get().info("AuthenticationService::obtainTokens: called", {
@@ -14,14 +15,31 @@ net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(Logi
 
     LoggerSingleton::get().debug("AuthenticationService::obtainTokens: checking password");
 
-    const std::string incomingPwd = data.password;
-    const std::string storedHash = user.password.value();
-    bool ok = co_await net::co_spawn(
+    const std::string plain = data.password;
+    const std::string stored = user.password.value();
+
+    auto hasher = passwordHasher_; // copy shared_ptr
+    auto [ok, needsRehash] = co_await async_offload(
         blockingPool_.get_executor(),
-        [storedHash, incomingPwd]() -> net::awaitable<bool> { co_return BCrypt::validatePassword(incomingPwd, storedHash); },
-        net::use_awaitable
+        [plain, stored, hasher]() {
+            bool nr = false;
+            bool res = hasher->verify(plain, stored, &nr);
+            return std::pair{res, nr};
+        }
     );
     if (!ok) throw ValidationError("Incorrect credentials");
+    if (needsRehash) {
+        // update hash to new, harder one
+        // auto newHash = co_await net::co_spawn(
+        //     blockingPool_.get_executor(),
+        //     [plain, &hasher = passwordHasher_]() -> net::awaitable<std::string> {
+        //         co_return hasher.hash(plain);
+        //     },
+        //     boost::asio::use_awaitable
+        // );
+        // user.password = newHash; + persist
+    }
+
 
     TokenResponseSerializer tokenPair;
     // TODO: add refresh token logic (I'm lazy as fuck)
@@ -33,16 +51,18 @@ net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(Logi
 net::awaitable<void> AuthenticationService::registerUser(RegisterSerializer& data) const {
     LoggerSingleton::get().info("AuthenticationService::registerUser: called", {
         {"email", data.email},
-        {"password", data.password},
         {"username", data.username}
     });
     UserEntity user = data.toEntity();
     const std::string rawPwd = user.password.value();
-    user.password = co_await net::co_spawn(
+    auto hasher = passwordHasher_; // copy shared_ptr
+    auto hash = co_await async_offload(
         blockingPool_.get_executor(),
-        [rawPwd]() -> net::awaitable<std::string> { co_return BCrypt::generateHash(rawPwd); },
-        net::use_awaitable
+        [rawPwd, hasher]() {
+            return hasher->hash(rawPwd);
+        }
     );
+    user.password = std::move(hash);
 
     LoggerSingleton::get().debug("AuthenticationService::registerUser: Creating user by repo");
     try {

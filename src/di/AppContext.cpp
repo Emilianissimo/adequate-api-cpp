@@ -19,6 +19,7 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
         ctx->config.root_path,
         ctx->config.file_upload_limit_size,
     };
+
     ctx->fileSystemService = std::make_unique<FileSystemService>(
         fileSystemOptions
     );
@@ -29,7 +30,8 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
     ctx->usersService = std::make_unique<UsersService>(
         *ctx->usersRepository,
         *ctx->fileSystemService,
-        *ctx->blockingPool
+        *ctx->blockingPool,
+        ctx->passwordHasher
     );
     ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);
 
@@ -42,7 +44,8 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
     ctx->authenticationService = std::make_unique<AuthenticationService>(
         *ctx->usersRepository,
         *ctx->jwtService,
-        *ctx->blockingPool
+        *ctx->blockingPool,
+        ctx->passwordHasher
     );
     ctx->authenticationController = std::make_unique<AuthenticationController>(
         *ctx->authenticationService,

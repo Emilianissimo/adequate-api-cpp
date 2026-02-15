@@ -12,6 +12,7 @@
 #include "services/users/UsersService.h"
 /// Authentication
 #include "controllers/auth/AuthenticationController.h"
+#include "core/hashers/SodiumPasswordHasher.h"
 #include "middlewares/AuthenticationMiddleware.h"
 #include "services/auth/AuthenticationService.h"
 
@@ -19,6 +20,7 @@ struct AppContext {
     // Add a pool for blocking operations (files, cryptography, heavy calculations)
     std::shared_ptr<net::thread_pool> blockingPool;
     std::shared_ptr<PgPool> pg;
+    std::shared_ptr<app::security::SodiumPasswordHasher> passwordHasher;
     // std::shared_ptr<Redis>  redis;
 
     EnvConfig config;

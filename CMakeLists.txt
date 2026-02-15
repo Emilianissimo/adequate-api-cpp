@@ -4,14 +4,10 @@ project(beast_api CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,undefined -fno-omit-frame-pointer")
+set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fsanitize=address,undefined")
 
 include(FetchContent)
-FetchContent_Declare(
-    libbcrypt
-    GIT_REPOSITORY https://github.com/Emilianissimo/libbcrypt.git
-    GIT_TAG        master
-)
-FetchContent_MakeAvailable(libbcrypt)
 FetchContent_Declare(
     jwt-cpp
     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
@@ -43,6 +39,7 @@ find_package(Poco REQUIRED Net Foundation)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBMAGIC REQUIRED IMPORTED_TARGET libmagic)
+pkg_check_modules(SODIUM REQUIRED IMPORTED_TARGET libsodium)
 
 # For docker and linux CLION
 if(UNIX AND NOT APPLE)
@@ -56,7 +53,6 @@ if(UNIX AND NOT APPLE)
 
     target_link_libraries(app
         PRIVATE
-        bcrypt
         Boost::system
         Boost::thread
         Boost::url
@@ -69,11 +65,12 @@ if(UNIX AND NOT APPLE)
         Poco::Net
         Poco::Foundation
         PkgConfig::LIBMAGIC
+        ${SODIUM_LIBRARIES}
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src
         ${PostgreSQL_INCLUDE_DIRS}
-        ${libbcrypt_SOURCE_DIR}/include
+        ${SODIUM_INCLUDE_DIRS}
     )
 elseif(APPLE)
     set(Boost_USE_STATIC_LIBS OFF)
@@ -100,7 +97,6 @@ elseif(APPLE)
 
     target_link_libraries(app
         PRIVATE
-        bcrypt
         ${Boost_THREAD_LIBRARY}
         Boost::thread
         nlohmann_json::nlohmann_json
@@ -112,12 +108,13 @@ elseif(APPLE)
         Poco::Net
         Poco::Foundation
         PkgConfig::LIBMAGIC
+        ${SODIUM_LIBRARIES}
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src
         ${PostgreSQL_INCLUDE_DIRS}
-        ${libbcrypt_SOURCE_DIR}/include
         ${Boost_INCLUDE_DIRS}
+        ${SODIUM_INCLUDE_DIRS}
     )
 elseif(WIN32)
     find_package(Boost REQUIRED COMPONENTS system thread url)
@@ -131,11 +128,13 @@ elseif(WIN32)
             src/core/file_system/FileSystemService.h
             src/core/file_system/errors/FileSystemErrors.h
             src/core/file_system/magic_mime/MagicMimeDetector.cpp
-            src/core/file_system/magic_mime/MagicMimeDetector.h)
+            src/core/file_system/magic_mime/MagicMimeDetector.h
+            src/core/hashers/interfaces/PasswordHasherInterface.h
+            src/core/hashers/SodiumPasswordHasher.h
+            src/core/helpers/Offload.h)
 
     target_link_libraries(app
         PRIVATE
-        bcrypt
         Boost::system
         Boost::thread
         Boost::url
@@ -148,12 +147,13 @@ elseif(WIN32)
         Poco::Net
         Poco::Foundation
         PkgConfig::LIBMAGIC
+        ${SODIUM_LIBRARIES}
     )
     target_include_directories(app PRIVATE
         ${CMAKE_SOURCE_DIR}/src
         ${PostgreSQL_INCLUDE_DIRS}
-        ${libbcrypt_SOURCE_DIR}/include
         ${Boost_INCLUDE_DIRS}
+        ${SODIUM_INCLUDE_DIRS}
     )
 endif()
 

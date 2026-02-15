@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     nlohmann-json3-dev \
     libpoco-dev \
     libmagic-dev \
+    libsodium-dev \
  && rm -rf /var/lib/apt/lists/*
 
 # --- Boost 1.84+ (for http::message_generator and co_await) ---

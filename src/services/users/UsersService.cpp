@@ -1,7 +1,8 @@
 #include "services/users/UsersService.h"
 #include "core/loggers/LoggerSingleton.h"
 #include <algorithm>
-#include <bcrypt/BCrypt.hpp>
+
+#include "core/helpers/Offload.h"
 
 net::awaitable<std::vector<UserSerializer>> UsersService::list(UserListFilter& filters) const {
     LoggerSingleton::get().info(
@@ -43,11 +44,14 @@ net::awaitable<UserCreateResponseSerializer> UsersService::create(UserCreateSeri
     {
         const std::string rawPwd = user.password.value();
         // Offloading CPU bound hashing
-        user.password = co_await net::co_spawn(
+        auto hasher = passwordHasher_; // copy shared_ptr
+        auto hash = co_await async_offload(
             blockingPool_.get_executor(),
-            [rawPwd]() -> net::awaitable<std::string> { co_return BCrypt::generateHash(rawPwd); },
-            net::use_awaitable
+            [rawPwd, hasher]() {
+                return hasher->hash(rawPwd);
+            }
         );
+        user.password = std::move(hash);
     }
 
     LoggerSingleton::get().debug("UsersService::create: Creating user by repo");
@@ -91,11 +95,14 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFi
     {
         const std::string rawPwd = user.password.value();
         // Offloading CPU bound hashing
-        user.password = co_await net::co_spawn(
+        auto hasher = passwordHasher_; // copy shared_ptr
+        auto hash = co_await async_offload(
             blockingPool_.get_executor(),
-            [rawPwd]() -> net::awaitable<std::string> { co_return BCrypt::generateHash(rawPwd); },
-            net::use_awaitable
+            [rawPwd, hasher]() {
+                return hasher->hash(rawPwd);
+            }
         );
+        user.password = std::move(hash);
     }
 
     try
