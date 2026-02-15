@@ -85,9 +85,9 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFi
 
     try
     {
-        co_await UsersRepository::update(user);
+        co_await repo_.update(user);
         // Use the current coroutine's executor for non-blocking I/O
-        const auto executor = co_await net::this_coro::executor;
+        const auto executor = blockingPool_.get_executor();
 
         co_await fs_.storeAsync(
             executor,

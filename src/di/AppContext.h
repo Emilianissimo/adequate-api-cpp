@@ -16,6 +16,8 @@
 #include "services/auth/AuthenticationService.h"
 
 struct AppContext {
+    // Add a pool for blocking operations (files, cryptography, heavy calculations)
+    std::shared_ptr<boost::asio::thread_pool> blockingPool;
     std::shared_ptr<PgPool> pg;
     // std::shared_ptr<Redis>  redis;
 

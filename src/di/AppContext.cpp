@@ -28,7 +28,8 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);
     ctx->usersService = std::make_unique<UsersService>(
         *ctx->usersRepository,
-        *ctx->fileSystemService
+        *ctx->fileSystemService,
+        *ctx->blockingPool
     );
     ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);
 

@@ -12,5 +12,5 @@ public:
     net::awaitable<void> create(UserEntity& entity) const;
     [[nodiscard]] net::awaitable<bool> exists(const UserFilter& filters) const;
 
-    static net::awaitable<void> update(UserEntity& entity);
+    net::awaitable<void> update(UserEntity& entity);
 };

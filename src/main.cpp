@@ -19,9 +19,16 @@ int main() {
         static_cast<int>(std::max(1u, std::thread::hardware_concurrency()))
     };
 
+    // Create a pool.
+    // Note: thread_pool starts immediately upon creation.
+    auto blockingPool = std::make_shared<boost::asio::thread_pool>(
+        std::thread::hardware_concurrency()
+    );
+
     // DI context
     const auto ctx = std::make_shared<AppContext>();
     ctx->pg = std::make_shared<PgPool>(ioc.get_executor(), env.pg_dsn, env.pg_pool_size);
+    ctx->blockingPool = blockingPool;
     ctx->config = env;
     appctx::init(ctx);
     appctx::wire(ctx);
@@ -31,5 +38,9 @@ int main() {
     Router router;
     app::define_routes(router, ctx);
     Bootstrap bootstrap;
-    return bootstrap.run(ioc, env, router);
+    int result =  bootstrap.run(ioc, env, router);
+
+    // Important: join on exit, to ensure graceful end of tasks
+    blockingPool->join();
+    return result;
 }
