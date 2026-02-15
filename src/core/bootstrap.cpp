@@ -62,7 +62,7 @@ static awaitable<void> session(tcp::socket socket, Router& router, const EnvConf
     if (shouldWriteError) {
         boost::system::error_code ec;
         co_await http::async_write(socket, errorResponse,
-                                  boost::asio::redirect_error(use_awaitable, ec));
+                                  net::redirect_error(use_awaitable, ec));
     }
     {
         beast::error_code ec;
@@ -84,7 +84,7 @@ static awaitable<void> listener(const std::string& host, const uint16_t port, Ro
     }
 }
 
-int Bootstrap::run(boost::asio::io_context& ioc, const EnvConfig& env, Router& router) {
+int Bootstrap::run(net::io_context& ioc, const EnvConfig& env, Router& router) {
     try {
         net::signal_set signals(ioc, SIGINT, SIGTERM);
         signals.async_wait([&](auto, auto){ ioc.stop(); });

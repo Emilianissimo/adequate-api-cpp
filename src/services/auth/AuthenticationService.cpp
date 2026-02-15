@@ -13,7 +13,15 @@ net::awaitable<TokenResponseSerializer> AuthenticationService::obtainTokens(Logi
     const UserEntity user = co_await this->usersRepository_.getOne(filters);
 
     LoggerSingleton::get().debug("AuthenticationService::obtainTokens: checking password");
-    if (!BCrypt::validatePassword(data.password, user.password.value())) throw ValidationError("Incorrect credentials");
+
+    const std::string incomingPwd = data.password;
+    const std::string storedHash = user.password.value();
+    bool ok = co_await net::co_spawn(
+        blockingPool_.get_executor(),
+        [storedHash, incomingPwd]() -> net::awaitable<bool> { co_return BCrypt::validatePassword(incomingPwd, storedHash); },
+        net::use_awaitable
+    );
+    if (!ok) throw ValidationError("Incorrect credentials");
 
     TokenResponseSerializer tokenPair;
     // TODO: add refresh token logic (I'm lazy as fuck)
@@ -29,7 +37,12 @@ net::awaitable<void> AuthenticationService::registerUser(RegisterSerializer& dat
         {"username", data.username}
     });
     UserEntity user = data.toEntity();
-    user.password = BCrypt::generateHash(user.password.value());
+    const std::string rawPwd = user.password.value();
+    user.password = co_await net::co_spawn(
+        blockingPool_.get_executor(),
+        [rawPwd]() -> net::awaitable<std::string> { co_return BCrypt::generateHash(rawPwd); },
+        net::use_awaitable
+    );
 
     LoggerSingleton::get().debug("AuthenticationService::registerUser: Creating user by repo");
     try {

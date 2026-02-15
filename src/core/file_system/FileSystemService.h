@@ -15,6 +15,8 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/any_io_executor.hpp>
 
+namespace net = boost::asio;
+
 struct StoredFileInfo
 {
     std::filesystem::path relativePath; // entity/id/file_name
@@ -64,8 +66,8 @@ public:
     explicit FileSystemService(Options options);
 
     StoredFileInfo store(std::string_view entityName, std::string_view entityId, const IncomingFile& file) const;
-    boost::asio::awaitable<StoredFileInfo> storeAsync(
-        boost::asio::any_io_executor poolExec,
+    net::awaitable<StoredFileInfo> storeAsync(
+        net::any_io_executor poolExec,
         std::string entityName,
         std::string entityId,
         IncomingFile file

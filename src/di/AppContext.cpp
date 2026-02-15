@@ -41,7 +41,8 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
 
     ctx->authenticationService = std::make_unique<AuthenticationService>(
         *ctx->usersRepository,
-        *ctx->jwtService
+        *ctx->jwtService,
+        *ctx->blockingPool
     );
     ctx->authenticationController = std::make_unique<AuthenticationController>(
         *ctx->authenticationService,

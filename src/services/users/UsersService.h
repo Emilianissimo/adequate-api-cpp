@@ -14,7 +14,7 @@ public:
     explicit UsersService(
         UsersRepository& repo,
         FileSystemService& fs,
-        boost::asio::thread_pool& blockingPool) : repo_(repo), fs_(fs), blockingPool_(blockingPool) {}
+        net::thread_pool& blockingPool) : repo_(repo), fs_(fs), blockingPool_(blockingPool) {}
     net::awaitable<std::vector<UserSerializer>> list(UserListFilter& filters) const;
     net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer& data) const;
     net::awaitable<bool> exists(UserFilter& filters) const;
@@ -23,5 +23,5 @@ public:
 private:
     UsersRepository& repo_;
     FileSystemService& fs_;
-    boost::asio::thread_pool& blockingPool_;
+    net::thread_pool& blockingPool_;
 };

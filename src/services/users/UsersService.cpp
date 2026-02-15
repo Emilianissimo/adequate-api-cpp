@@ -39,7 +39,16 @@ net::awaitable<UserCreateResponseSerializer> UsersService::create(UserCreateSeri
         {"username", data.username}
     });
     UserEntity user = data.toEntity();
-    user.password = BCrypt::generateHash(user.password.value());
+    if (user.password.has_value())
+    {
+        const std::string rawPwd = user.password.value();
+        // Offloading CPU bound hashing
+        user.password = co_await net::co_spawn(
+            blockingPool_.get_executor(),
+            [rawPwd]() -> net::awaitable<std::string> { co_return BCrypt::generateHash(rawPwd); },
+            net::use_awaitable
+        );
+    }
 
     LoggerSingleton::get().debug("UsersService::create: Creating user by repo");
     try {
@@ -80,7 +89,13 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFi
 
     if (user.password.has_value())
     {
-        user.password = BCrypt::generateHash(user.password.value());
+        const std::string rawPwd = user.password.value();
+        // Offloading CPU bound hashing
+        user.password = co_await net::co_spawn(
+            blockingPool_.get_executor(),
+            [rawPwd]() -> net::awaitable<std::string> { co_return BCrypt::generateHash(rawPwd); },
+            net::use_awaitable
+        );
     }
 
     try

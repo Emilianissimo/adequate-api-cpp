@@ -15,13 +15,13 @@ int main() {
         LoggerFactory::create("console")
     );
 
-    boost::asio::io_context ioc{
+    net::io_context ioc{
         static_cast<int>(std::max(1u, std::thread::hardware_concurrency()))
     };
 
     // Create a pool.
     // Note: thread_pool starts immediately upon creation.
-    auto blockingPool = std::make_shared<boost::asio::thread_pool>(
+    auto blockingPool = std::make_shared<net::thread_pool>(
         std::thread::hardware_concurrency()
     );
 

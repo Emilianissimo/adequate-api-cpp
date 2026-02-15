@@ -11,13 +11,15 @@ class AuthenticationService {
 public:
     explicit AuthenticationService(
         UsersRepository& usersRepository,
-        JwtService& jwtService
-    ) : usersRepository_(usersRepository), jwtService_(jwtService) {}
+        JwtService& jwtService,
+        net::thread_pool& blockingPool
+    ) : usersRepository_(usersRepository), jwtService_(jwtService), blockingPool_(blockingPool) {}
     net::awaitable<TokenResponseSerializer> obtainTokens(LoginSerializer& data) const;
     net::awaitable<void> registerUser(RegisterSerializer& data) const;
 private:
     UsersRepository& usersRepository_;
     JwtService& jwtService_;
+    net::thread_pool& blockingPool_;
 };
 
 

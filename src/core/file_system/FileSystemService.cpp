@@ -96,8 +96,8 @@ StoredFileInfo FileSystemService::store(
     return info;
 }
 
-boost::asio::awaitable<StoredFileInfo> FileSystemService::storeAsync(
-    const boost::asio::any_io_executor poolExec,
+net::awaitable<StoredFileInfo> FileSystemService::storeAsync(
+    const net::any_io_executor poolExec,
     std::string entityName,
     std::string entityId,
     IncomingFile file
@@ -110,16 +110,16 @@ boost::asio::awaitable<StoredFileInfo> FileSystemService::storeAsync(
     // Important: Offload blocking work to a separate executor (thread pool).
     // exec must be a pool executor, not an io_context with a single thread.
 
-    co_return co_await boost::asio::co_spawn(
+    co_return co_await net::co_spawn(
         poolExec,
         [this,
          entityName = std::move(entityName),
          entityId   = std::move(entityId),
-         file       = std::move(file)]() mutable -> boost::asio::awaitable<StoredFileInfo>
+         file       = std::move(file)]() mutable -> net::awaitable<StoredFileInfo>
         {
             co_return this->store(entityName, entityId, file);
         },
-        boost::asio::use_awaitable
+        net::use_awaitable
     );
 }
 
