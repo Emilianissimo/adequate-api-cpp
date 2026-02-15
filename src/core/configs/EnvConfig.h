@@ -13,6 +13,7 @@ struct EnvConfig {
     std::string secret_key;
     uint64_t file_upload_limit_size;
     std::string multipart_adapter;
+    std::string root_path;
 
     static EnvConfig load();
 };

@@ -21,6 +21,7 @@ struct AppContext {
 
     EnvConfig config;
     std::unique_ptr<JwtService> jwtService;
+    std::unique_ptr<FileSystemService> fileSystemService;
 
     std::unique_ptr<HealthController> healthController;
 

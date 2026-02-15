@@ -5,6 +5,7 @@
 #include "serializers/users/UserUpdateSerializer.h"
 #include "filters/users/UserListFilter.h"
 #include "../../core/http/interfaces/HttpInterface.h"
+#include "core/file_system/FileSystemService.h"
 #include "repositories/users/UsersRepository.h"
 
 class UsersService {
@@ -14,7 +15,7 @@ public:
     net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer& data) const;
     net::awaitable<bool> exists(UserFilter& filters) const;
 
-    static net::awaitable<void> update(UserUpdateSerializer& data);
+    static net::awaitable<void> update(UserUpdateSerializer& data, IncomingFile& picture);
 private:
     UsersRepository& repo_;
 };

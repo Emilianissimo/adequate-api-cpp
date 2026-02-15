@@ -15,12 +15,22 @@ void appctx::init(std::shared_ptr<AppContext> ctx) {
 }
 
 void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
+    FileSystemService::Options fileSystemOptions = {
+        ctx->config.root_path,
+        ctx->config.file_upload_limit_size,
+    };
+    ctx->fileSystemService = std::make_unique<FileSystemService>(
+        fileSystemOptions
+    );
     ctx->jwtService = std::make_unique<JwtService>(ctx->config);
     ctx->healthController = std::make_unique<HealthController>();
 
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);
     ctx->usersService = std::make_unique<UsersService>(*ctx->usersRepository);
-    ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);
+    ctx->usersController = std::make_unique<UsersController>(
+        *ctx->usersService,
+        *ctx->fileSystemService
+    );
 
     // Auth Middleware
     ctx->authenticationMiddleware = std::make_shared<AuthenticationMiddleware>(

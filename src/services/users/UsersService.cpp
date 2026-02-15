@@ -61,13 +61,13 @@ net::awaitable<UserCreateResponseSerializer> UsersService::create(UserCreateSeri
     }
 }
 
-net::awaitable<void> UsersService::update(UserUpdateSerializer& data)
+net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFile& picture)
 {
     LoggerSingleton::get().info("UsersService::update: called", {
         {"id", data.id},
         {"email", data.email.value_or("null")},
         {"username", data.username.value_or("null")},
-        {"picture", data.picture.has_value() ? std::string("passed") : std::string("null")}
+        {"picture", data.picture.value_or(("null"))}
     });
     UserEntity user = data.toEntity();
 
@@ -75,7 +75,7 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data)
         {"id", user.id},
         {"email", user.email.value_or("null")},
         {"username", user.username.value_or("null")},
-        {"picture", data.picture.has_value() ? std::string("passed") : std::string("null")}
+        {"picture", data.picture.value_or(("null"))}
     });
 
     if (user.password.has_value())
@@ -86,6 +86,7 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data)
     try
     {
         co_await UsersRepository::update(user);
+        // co_await to store file after writing in DB async
         co_return;
     } catch (const DbError& e)
     {

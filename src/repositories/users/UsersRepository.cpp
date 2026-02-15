@@ -3,6 +3,7 @@
 #include "core/db/postgres/builder/SQLBuilder.h"
 #include "core/loggers/LoggerSingleton.h"
 #include "core/errors/Errors.h"
+#include "core/http/interfaces/HttpInterface.h"
 
 net::awaitable<std::vector<UserEntity>> UsersRepository::getList(UserListFilter& filters) const {
     const std::vector<std::string> fields{ "id", "username", "picture", "email", "created_at", "updated_at" };
@@ -113,7 +114,7 @@ net::awaitable<void> UsersRepository::create(UserEntity& entity) const {
     params.emplace_back(entity.email);
     params.emplace_back(entity.password);
 
-    std::vector<std::string> fields{ "username", "email", "password" };
+    const std::vector<std::string> fields{ "username", "email", "password" };
     SQLBuilder qb("users");
     qb.insert(fields);
     qb.returning("id");
@@ -137,13 +138,31 @@ net::awaitable<void> UsersRepository::update(UserEntity& entity) {
         {"picture", entity.picture.has_value() ? std::string("passed") : std::string("null")},
     });
     std::vector<std::optional<std::string>> params;
-    if (!entity.email->empty()) params.emplace_back(entity.email);
-    if (!entity.username->empty()) params.emplace_back(entity.username);
-    if (!entity.password->empty()) params.emplace_back(entity.password);
-    if (!entity.picture->empty()) params.emplace_back(entity.picture);
+    std::vector<std::string> fields;
+
+    if (!entity.email->empty())
+    {
+        params.emplace_back(entity.email);
+        fields.emplace_back("email");
+    }
+    if (!entity.username->empty())
+    {
+        params.emplace_back(entity.username);
+        fields.emplace_back("username");
+    }
+    if (!entity.password->empty())
+    {
+        params.emplace_back(entity.password);
+    }
+    if (!entity.picture->empty())
+    {
+        params.emplace_back(entity.picture);
+        fields.emplace_back("picture");
+    };
     LoggerSingleton::get().debug("UsersRepository::update: emplaced fields to update", {
         {"size", params.size()}
     });
+
 
     co_return;
 }

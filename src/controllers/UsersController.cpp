@@ -3,6 +3,8 @@
 #include "core/http/ResponseTypes.h"
 #include "core/errors/Errors.h"
 #include <nlohmann/json.hpp>
+
+#include "core/file_system/FileSystemService.h"
 #include "core/loggers/LoggerSingleton.h"
 #include "filters/users/UserListFilter.h"
 
@@ -104,21 +106,33 @@ net::awaitable<Outcome> UsersController::update(const Request& request) const
     });
 
     nlohmann::json body;
+    IncomingFile picture;
 
     /// Multipart json fields selection
     /// NOTE: For v1 we unify multipart and json manually.
     /// Future versions may move this to Request layer.
     if (request.content_type().find("multipart/form-data") != std::string::npos) {
-        const auto& f = request.multipart().fields;
+        const auto& multipart = request.multipart();
 
-        if (auto it = f.find("username"); it != f.end())
+        if (auto it = multipart.fields.find("username"); it != multipart.fields.end())
             body["username"] = it->second;
 
-        if (auto it = f.find("password"); it != f.end())
+        if (auto it = multipart.fields.find("password"); it != multipart.fields.end())
             body["password"] = it->second;
 
-        if (auto it = f.find("email"); it != f.end())
+        if (auto it = multipart.fields.find("email"); it != multipart.fields.end())
             body["email"] = it->second;
+
+        if (auto it = multipart.files.find("picture"); it != multipart.files.end()) {
+            const auto& filePart = it->second;
+
+            picture = IncomingFile{
+                .bytes = filePart.data,
+                .originalFileName = filePart.filename,
+                .contentType = filePart.contentType
+            };
+            body["picture"] = picture.originalFileName;
+        }
     } else {
         body = request.json();
     }
@@ -154,7 +168,7 @@ net::awaitable<Outcome> UsersController::update(const Request& request) const
 
     UserCreateResponseSerializer user;
     try {
-        co_await service_.update(serializer);
+        co_await service_.update(serializer, picture);
     } catch (const ValidationError& e) {
         error_msg = e.what();
         LoggerSingleton::get().warn(

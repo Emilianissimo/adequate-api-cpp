@@ -45,6 +45,7 @@ EnvConfig EnvConfig::load()
     config.secret_key             = getEnvOrDefault("SECRET_KEY", "");
     config.multipart_adapter      = getEnvOrDefault("MULTIPART_ADAPTER", "POCO");
     config.file_upload_limit_size = getEnvOrDefaultUint64("FILE_UPLOAD_LIMIT_SIZE", 0);
+    config.root_path              = getEnvOrDefault("ROOT_PATH", "/work/media");
 
     return config;
 }
