@@ -26,11 +26,11 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
     ctx->healthController = std::make_unique<HealthController>();
 
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);
-    ctx->usersService = std::make_unique<UsersService>(*ctx->usersRepository);
-    ctx->usersController = std::make_unique<UsersController>(
-        *ctx->usersService,
+    ctx->usersService = std::make_unique<UsersService>(
+        *ctx->usersRepository,
         *ctx->fileSystemService
     );
+    ctx->usersController = std::make_unique<UsersController>(*ctx->usersService);
 
     // Auth Middleware
     ctx->authenticationMiddleware = std::make_shared<AuthenticationMiddleware>(

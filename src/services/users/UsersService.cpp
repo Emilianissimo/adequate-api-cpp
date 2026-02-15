@@ -86,7 +86,15 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFi
     try
     {
         co_await UsersRepository::update(user);
-        // co_await to store file after writing in DB async
+        // Use the current coroutine's executor for non-blocking I/O
+        const auto executor = co_await net::this_coro::executor;
+
+        co_await fs_.storeAsync(
+            executor,
+            "users",
+            std::to_string(user.id),
+            std::move(picture)
+        );
         co_return;
     } catch (const DbError& e)
     {

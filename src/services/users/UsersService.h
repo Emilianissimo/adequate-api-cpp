@@ -10,12 +10,13 @@
 
 class UsersService {
 public:
-    explicit UsersService(UsersRepository& repo) : repo_(repo) {}
+    explicit UsersService(UsersRepository& repo, FileSystemService& fs) : repo_(repo), fs_(fs) {}
     net::awaitable<std::vector<UserSerializer>> list(UserListFilter& filters) const;
     net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer& data) const;
     net::awaitable<bool> exists(UserFilter& filters) const;
 
-    static net::awaitable<void> update(UserUpdateSerializer& data, IncomingFile& picture);
+    net::awaitable<void> update(UserUpdateSerializer& data, IncomingFile& picture);
 private:
     UsersRepository& repo_;
+    FileSystemService& fs_;
 };
