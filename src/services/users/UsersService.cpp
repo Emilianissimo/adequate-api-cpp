@@ -61,7 +61,7 @@ net::awaitable<UserCreateResponseSerializer> UsersService::create(UserCreateSeri
     }
 }
 
-net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFile& picture)
+net::awaitable<void> UsersService::update(UserUpdateSerializer& data, IncomingFile& picture) const
 {
     LoggerSingleton::get().info("UsersService::update: called", {
         {"id", data.id},

@@ -15,7 +15,7 @@ public:
     net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer& data) const;
     net::awaitable<bool> exists(UserFilter& filters) const;
 
-    net::awaitable<void> update(UserUpdateSerializer& data, IncomingFile& picture);
+    net::awaitable<void> update(UserUpdateSerializer& data, IncomingFile& picture) const;
 private:
     UsersRepository& repo_;
     FileSystemService& fs_;
