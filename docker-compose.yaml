@@ -17,6 +17,8 @@ services:
       - cpp_api
     ports:
       - "8080:8080"
+    volumes:
+      - ./src/media:/work/src/media
 
   redis:
     image: redis:alpine

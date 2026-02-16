@@ -12,6 +12,8 @@ namespace net = boost::asio;
 
 /// NEED TO STRICTLY REVIEWED
 /// Written with GPT guide, but need to be tested on production env
+///
+/// CANCELLATION: working only on best effort before start. If task is running, cannot cancel (normal offloading pattern)
 
 inline std::exception_ptr make_operation_aborted_ep()
 {
@@ -52,7 +54,7 @@ auto async_offload(Executor blockingEx, Fn fn)
             [ioEx, blockingEx, func = std::move(fn)](auto handler) mutable {
 
                 using H  = std::decay_t<decltype(handler)>;
-                using St = OffloadState<H, int>; // int-фиктивный, result не используется при void
+                using St = OffloadState<H, int>; // int-fiction, result is not using with void
 
                 auto st = std::make_shared<St>(net::any_io_executor(ioEx));
                 st->h.emplace(std::move(handler));
