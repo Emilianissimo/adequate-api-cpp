@@ -40,8 +40,6 @@ public:
 
     net::awaitable<void> run() {
         auto self = shared_from_this();
-        int code = 0;
-        std::string err;
 
         try {
             for (;;) {
@@ -66,24 +64,11 @@ public:
                 }
             }
         } catch (const boost::system::system_error& se) {
-            err = se.code().message();
-            if (se.code() == http::error::body_limit) {
-                code = static_cast<int>(http::status::payload_too_large);
-            } else {
-                LoggerSingleton::get().warn("Session error: " + se.code().message());
-            }
+            LoggerSingleton::get().warn("Session error: " + se.code().message());
         } catch (const std::exception& ex) {
             LoggerSingleton::get().error("Session exception: " + std::string(ex.what()));
         }
 
-        if (code == static_cast<int>(http::status::payload_too_large)) {
-            co_await sendError(http::status::payload_too_large, "Payload too large");
-        } else {
-            LoggerSingleton::get().warn("Session error: " + err);
-        }
-
-        // При выходе из run() self уничтожается.
-        // Если это была последняя ссылка, сокет и буфер корректно удаляются.
         co_return;
     }
 

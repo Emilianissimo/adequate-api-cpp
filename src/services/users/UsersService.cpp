@@ -107,15 +107,24 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer data, IncomingFil
     try
     {
         co_await repo_.update(user);
-        // Use the current coroutine's executor for non-blocking I/O
-        const auto executor = blockingPool_.get_executor();
-
-        co_await fs_.storeAsync(
-            executor,
-            "users",
-            std::to_string(user.id),
-            std::move(picture)
-        );
+        if (user.picture.has_value() && !picture.bytes.empty())
+        {
+            // Use the current coroutine's executor for non-blocking I/O
+            auto* fileSystemHandler = &fs_;
+            auto picShared = std::make_shared<IncomingFile>(picture);
+            auto userIdShared = std::make_shared<std::string>(std::to_string(user.id));
+            co_await async_offload(
+                blockingPool_.get_executor(),
+                [fileSystemHandler, picShared, userIdShared]()
+                {
+                    return fileSystemHandler->store(
+                        "users",
+                        *userIdShared,
+                        *picShared
+                    );
+                }
+            );
+        }
         co_return;
     } catch (const DbError& e)
     {

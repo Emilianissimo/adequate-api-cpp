@@ -10,7 +10,7 @@
 
 std::string MagicMimeDetector::detectMime(const std::vector<std::uint8_t>& bytes) const {
     LoggerSingleton::get().info("MagicMimeDetector::detectMime: called", {
-        {"bytes_size", bytes.size()},
+        {"bytes_size", std::to_string(bytes.size())},
     });
 
     if (bytes.empty()) return {};

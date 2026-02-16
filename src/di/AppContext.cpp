@@ -1,6 +1,7 @@
 #include "di/AppContext.h"
 #include <stdexcept>
 #include <atomic>
+#include <filesystem>
 
 namespace {
     std::shared_ptr<AppContext> g_ctx;
@@ -15,8 +16,12 @@ void appctx::init(std::shared_ptr<AppContext> ctx) {
 }
 
 void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
+    std::filesystem::path rootPath = PROJECT_ROOT;
+    rootPath /= "src";
+    rootPath /= ctx->config.media_path;
+
     FileSystemService::Options fileSystemOptions = {
-        ctx->config.root_path,
+        rootPath,
         ctx->config.file_upload_limit_size,
     };
 

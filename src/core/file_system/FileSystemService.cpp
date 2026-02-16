@@ -24,7 +24,7 @@ static std::string makeErr(const std::string& what, const std::filesystem::path&
 }
 
 static const MagicMimeDetector& mimeDetector() {
-    static MagicMimeDetector det;
+    thread_local MagicMimeDetector det;
     return det;
 }
 
@@ -48,11 +48,15 @@ FileSystemService::FileSystemService(Options options) : opts_(std::move(options)
 StoredFileInfo FileSystemService::store(
     std::string_view entityName,
     std::string_view entityId,
-    const IncomingFile& file) const
+    IncomingFile file) const
 {
+    if (file.bytes.empty())
+    {
+        throw FileIOError("FileSystemService: file is empty");
+    };
     LoggerSingleton::get().info("FileSystemService::store: called", {
-        {"entityName", entityName},
-        {"entityId", entityId},
+        {"entityName", std::string(entityName)},
+        {"entityId", std::string(entityId)},
     });
     const std::string normEntity = normalizeEntityName(entityName);
     const std::string normId = normalizeEntityId(entityId);
@@ -94,33 +98,6 @@ StoredFileInfo FileSystemService::store(
     info.storedFileName = name;
     info.bytesWritten = bytesWritten;
     return info;
-}
-
-net::awaitable<StoredFileInfo> FileSystemService::storeAsync(
-    const net::any_io_executor poolExec,
-    std::string entityName,
-    std::string entityId,
-    IncomingFile file
-) const
-{
-    LoggerSingleton::get().info("FileSystemService::storeAsync: called", {
-        {"entityName", entityName},
-        {"entityId", entityId},
-    });
-    // Important: Offload blocking work to a separate executor (thread pool).
-    // exec must be a pool executor, not an io_context with a single thread.
-
-    co_return co_await net::co_spawn(
-        poolExec,
-        [this,
-         entityName = std::move(entityName),
-         entityId   = std::move(entityId),
-         file       = std::move(file)]() mutable -> net::awaitable<StoredFileInfo>
-        {
-            co_return this->store(entityName, entityId, file);
-        },
-        net::use_awaitable
-    );
 }
 
 void FileSystemService::remove(const std::filesystem::path& relativePath) const
@@ -168,7 +145,7 @@ std::string FileSystemService::toLower(std::string input)
 bool FileSystemService::isValidEntityName(const std::string_view input)
 {
     LoggerSingleton::get().info("FileSystemService::isValidEntityName: called", {
-        {"input", input},
+        {"input", std::string(input)},
     });
     static const std::regex re("^[a-z0-9_]+$");
     return std::regex_match(std::string(input), re);
@@ -189,7 +166,7 @@ bool FileSystemService::isValidEntityId(std::string_view input) const
 
 std::string FileSystemService::normalizeEntityName(std::string_view input) {
     LoggerSingleton::get().info("FileSystemService::normalizeEntityName: called", {
-        {"input", input},
+        {"input", std::string(input)},
     });
     std::string v(input);
     v = toLower(std::move(v));
@@ -201,7 +178,7 @@ std::string FileSystemService::normalizeEntityName(std::string_view input) {
 
 std::string FileSystemService::normalizeEntityId(std::string_view input) const {
     LoggerSingleton::get().info("FileSystemService::normalizeEntityId: called", {
-        {"input", input},
+        {"input", std::string(input)},
     });
     std::string v(input);
     v = toLower(std::move(v));
@@ -215,8 +192,8 @@ std::filesystem::path FileSystemService::buildRelativeDir(const std::string_view
                                                      const std::string_view entityId)
 {
     LoggerSingleton::get().info("FileSystemService::buildRelativeDir: called", {
-        {"entityName", entityName},
-        {"entityId", entityId},
+        {"entityName", std::string(entityName)},
+        {"entityId", std::string(entityId)},
     });
     // entity/id/file
     return std::filesystem::path(entityName) / std::filesystem::path(entityId) / "file";
@@ -226,7 +203,7 @@ std::string FileSystemService::pickAllowedExtension(const Options& opts,
                                                 const std::string_view originalFileName)
 {
     LoggerSingleton::get().info("FileSystemService::pickAllowedExtension: called", {
-        {"originalFileName", originalFileName},
+        {"originalFileName", std::string(originalFileName)},
     });
     if (originalFileName.empty()) return {};
 
@@ -246,10 +223,11 @@ std::string FileSystemService::pickAllowedExtension(const Options& opts,
 }
 
 std::string FileSystemService::randomHex(const std::size_t bytesLen) {
-    LoggerSingleton::get().info("FileSystemService::randomHex: called", {
-        {"bytesLen", bytesLen},
-    });
-    thread_local std::mt19937_64 rng(std::random_device{}());
+    thread_local std::mt19937_64 rng = []{
+        std::random_device rd;
+        return std::mt19937_64(rd());
+    }();
+
     static constexpr char hex[] = "0123456789abcdef";
 
     std::string out;
@@ -267,8 +245,8 @@ void FileSystemService::ensureWithinRoot(const std::filesystem::path& root,
                                     const std::filesystem::path& fullPath)
 {
     LoggerSingleton::get().info("FileSystemService::ensureWithinRoot: called", {
-        {"root", root},
-        {"fullPath", fullPath},
+        {"root", root.string()},
+        {"fullPath", fullPath.string()},
     });
     // Weakly canonical to tolerate non-existent final file.
     std::error_code ec1, ec2;
@@ -336,9 +314,9 @@ void FileSystemService::writeFileAtomic(const std::filesystem::path& finalPath,
                                    std::uintmax_t& bytesWritten)
 {
     LoggerSingleton::get().info("FileSystemService::writeFileAtomic: called", {
-       {"finalPath", finalPath},
-       {"bytes", bytes.size()},
-       {"bytesWritten", bytesWritten},
+       {"finalPath", finalPath.string()},
+       {"bytes", std::to_string(bytes.size())},
+       {"bytesWritten", std::to_string(bytesWritten)},
    });
     const auto dir = finalPath.parent_path();
 

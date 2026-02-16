@@ -65,13 +65,7 @@ public:
 
     explicit FileSystemService(Options options);
 
-    StoredFileInfo store(std::string_view entityName, std::string_view entityId, const IncomingFile& file) const;
-    net::awaitable<StoredFileInfo> storeAsync(
-        net::any_io_executor poolExec,
-        std::string entityName,
-        std::string entityId,
-        IncomingFile file
-    ) const;
+    StoredFileInfo store(std::string_view entityName, std::string_view entityId, IncomingFile file) const;
 
     void remove(const std::filesystem::path& relativePath) const;
 
