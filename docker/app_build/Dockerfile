@@ -32,8 +32,8 @@ RUN curl -L https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_DI
 
 # --- Build ---
 WORKDIR /work
-COPY CMakeLists.txt ./
-COPY src ./src
+COPY ../../CMakeLists.txt ./
+COPY ../../src ./src
 
 # Release or Debug
 RUN cmake -S . -B build -G Ninja \

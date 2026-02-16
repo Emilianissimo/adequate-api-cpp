@@ -1,10 +1,9 @@
 services:
   app:
-    profiles: ["dev"]
     container_name: cpp_api_container
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/app_build/Dockerfile
     working_dir: /work
     env_file:
       - ./.env
@@ -15,10 +14,21 @@ services:
         condition: service_healthy
     networks:
       - cpp_api
-    ports:
-      - "8080:8080"
     volumes:
-      - ./src/media:/work/src/media
+      - ./media:/work/media
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: cpp_api_nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./media:/work/media:ro
+    depends_on:
+      - app
+    networks:
+      - cpp_api
 
   redis:
     image: redis:alpine
