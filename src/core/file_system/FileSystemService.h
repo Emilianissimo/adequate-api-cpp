@@ -73,13 +73,19 @@ public:
 
     [[nodiscard]] const Options& options() const noexcept { return opts_; };
 
-    static std::filesystem::path buildRelativeDir(std::string_view entityName, std::string_view entityId);
+    std::string buildAbsolutePath(
+        const std::string& host,
+        std::string_view entityName,
+        std::string_view entityId,
+        const std::string& fileName
+    ) const;
 
 private:
     Options opts_;
 
     static std::string normalizeEntityName(std::string_view input);
     std::string normalizeEntityId(std::string_view input) const;
+    static std::filesystem::path buildRelativeDir(std::string_view entityName, std::string_view entityId);
 
     static std::string toLower(std::string input);
     static bool isValidEntityName(std::string_view input);

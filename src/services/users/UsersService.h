@@ -21,7 +21,7 @@ public:
     fs_(fs),
     blockingPool_(blockingPool),
     passwordHasher_(passwordHasher) {}
-    net::awaitable<std::vector<UserSerializer>> list(UserListFilter& filters) const;
+    net::awaitable<std::vector<UserSerializer>> list(UserListFilter& filters, std::string host) const;
     net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer data) const;
     net::awaitable<bool> exists(UserFilter& filters) const;
 

@@ -188,6 +188,17 @@ std::string FileSystemService::normalizeEntityId(std::string_view input) const {
     return v;
 }
 
+std::string FileSystemService::buildAbsolutePath(
+    const std::string& host,
+    std::string_view entityName,
+    std::string_view entityId,
+    const std::string& fileName
+) const
+{
+
+    return host + opts_.rootPath.string() + buildRelativeDir(entityName, entityId).string() + fileName;
+}
+
 std::filesystem::path FileSystemService::buildRelativeDir(const std::string_view entityName,
                                                      const std::string_view entityId)
 {

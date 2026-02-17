@@ -4,7 +4,7 @@
 
 #include "core/helpers/Offload.h"
 
-net::awaitable<std::vector<UserSerializer>> UsersService::list(UserListFilter& filters) const {
+net::awaitable<std::vector<UserSerializer>> UsersService::list(UserListFilter& filters, std::string host) const {
     LoggerSingleton::get().info(
         "UsersService::list: started", {
             {"id", filters.limit.has_value() ? std::to_string(filters.limit.value()) : "null"},
@@ -27,6 +27,15 @@ net::awaitable<std::vector<UserSerializer>> UsersService::list(UserListFilter& f
     // We can retrieve various variants of data, modified too
 
     for (UserEntity& user : users) {
+        if (user.picture.has_value())
+        {
+            user.picture = fs_.buildAbsolutePath(
+                host,
+                "users",
+                std::to_string(user.id),
+                user.picture.value()
+            );
+        }
         UserSerializer serializedUser = UserSerializer::fromEntity(user);
         serializedUsers.emplace_back(std::move(serializedUser));
     }

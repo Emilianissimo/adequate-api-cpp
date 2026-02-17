@@ -34,7 +34,13 @@ public:
 
     using RawRequest = http::request<http::string_body>;
 
-    explicit Request(RawRequest req, const EnvConfig& env) : req_(std::move(req)), env_(env) {}
+    std::string host;
+
+    explicit Request(RawRequest req, const EnvConfig& env) : req_(std::move(req)), env_(env)
+    {
+        if (auto it = req_.find(http::field::host); it != req_.end())
+            host = std::string(it->value());
+    }
 
     [[nodiscard]] const RawRequest& raw() const { return req_; }
     RawRequest& raw() { return req_; }

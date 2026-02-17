@@ -18,7 +18,10 @@ net::awaitable<Outcome> UsersController::index(const Request& request) const {
     filters.parseRequestQuery(request.query());
     filters.limit = std::clamp<std::size_t>(filters.limit.value_or(50), 1, 1000);
 
-    std::vector<UserSerializer> users = co_await service_.list(filters);
+    std::vector<UserSerializer> users = co_await service_.list(
+        filters,
+        request.host
+    );
 
     LoggerSingleton::get().debug("Converting serializer to JSON");
     nlohmann::json body = nlohmann::json::array();
