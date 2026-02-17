@@ -21,6 +21,7 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
 
     FileSystemService::Options fileSystemOptions = {
         rootPath,
+        ctx->config.media_path,
         ctx->config.file_upload_limit_size,
     };
 

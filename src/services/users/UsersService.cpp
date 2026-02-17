@@ -97,7 +97,7 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer data, IncomingFil
         {"id", user.id},
         {"email", user.email.value_or("null")},
         {"username", user.username.value_or("null")},
-        {"picture", data.picture.value_or(("null"))}
+        {"picture", user.picture.value_or(("null"))}
     });
 
     if (user.password.has_value())
@@ -115,14 +115,21 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer data, IncomingFil
 
     try
     {
-        co_await repo_.update(user);
         if (user.picture.has_value() && !picture.bytes.empty())
         {
+            // Delete folder with existing file without accessing filename from db (one file - one dir)
+            std::filesystem::path relativePath = FileSystemService::buildRelativeDir(
+                "users",
+                std::to_string(user.id)
+            );
+            if (fs_.exists(relativePath)) fs_.remove(relativePath);
+
             // Use the current coroutine's executor for non-blocking I/O
             auto* fileSystemHandler = &fs_;
             auto picShared = std::make_shared<IncomingFile>(picture);
             auto userIdShared = std::make_shared<std::string>(std::to_string(user.id));
-            co_await async_offload(
+
+            StoredFileInfo storeFileInfo = co_await async_offload(
                 blockingPool_.get_executor(),
                 [fileSystemHandler, picShared, userIdShared]()
                 {
@@ -133,7 +140,12 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer data, IncomingFil
                     );
                 }
             );
+
+            user.picture = storeFileInfo.storedFileName;
         }
+
+        co_await repo_.update(user);
+
         co_return;
     } catch (const DbError& e)
     {

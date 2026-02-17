@@ -37,6 +37,7 @@ public:
     struct Options
     {
         std::filesystem::path rootPath;
+        std::filesystem::path mediaPath;
         // Default 2GB of filesize, adjusts on env
         std::uintmax_t maxBytes = 10u * 1024u * 1024u;
         std::unordered_set<std::string> allowedExtensions = {
@@ -80,12 +81,14 @@ public:
         const std::string& fileName
     ) const;
 
+    std::string buildRelativePath(std::string_view entityName, std::string_view entityId, const std::string& fileName) const;
+    static std::filesystem::path buildRelativeDir(std::string_view entityName, std::string_view entityId);
+
 private:
     Options opts_;
 
     static std::string normalizeEntityName(std::string_view input);
     std::string normalizeEntityId(std::string_view input) const;
-    static std::filesystem::path buildRelativeDir(std::string_view entityName, std::string_view entityId);
 
     static std::string toLower(std::string input);
     static bool isValidEntityName(std::string_view input);

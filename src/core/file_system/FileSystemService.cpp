@@ -111,7 +111,7 @@ void FileSystemService::remove(const std::filesystem::path& relativePath) const
     ensureWithinRoot(opts_.rootPath, fullPath);
 
     std::error_code ec;
-    std::filesystem::remove(fullPath, ec);
+    std::filesystem::remove_all(fullPath, ec);
     if (ec)
     {
         throw FileIOError("Failed to remove file: " + fullPath.string() + " (" + ec.message() + ")");
@@ -195,9 +195,14 @@ std::string FileSystemService::buildAbsolutePath(
     const std::string& fileName
 ) const
 {
-
-    return host + opts_.rootPath.string() + buildRelativeDir(entityName, entityId).string() + fileName;
+    return host + buildRelativePath(entityName, entityId, fileName);
 }
+
+std::string FileSystemService::buildRelativePath(const std::string_view entityName, const std::string_view entityId, const std::string& fileName) const
+{
+    return (opts_.mediaPath / buildRelativeDir(entityName, entityId)).string() + "/" + fileName;
+}
+
 
 std::filesystem::path FileSystemService::buildRelativeDir(const std::string_view entityName,
                                                      const std::string_view entityId)

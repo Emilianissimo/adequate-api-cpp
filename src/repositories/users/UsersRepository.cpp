@@ -121,6 +121,7 @@ net::awaitable<void> UsersRepository::create(UserEntity& entity) const {
 
     auto result = co_await pool_->query(
         qb.str(),
+        // Remember to coordinate params and fields order to ensure SQL build correctly
         params,
         std::chrono::seconds(5)
     );
@@ -135,34 +136,48 @@ net::awaitable<void> UsersRepository::update(UserEntity& entity) {
         {"id", entity.id},
         {"email", entity.email.value_or("null")},
         {"username", entity.username.value_or("null")},
-        {"picture", entity.picture.has_value() ? std::string("passed") : std::string("null")},
+        {"picture", entity.picture.value_or("null")},
     });
     std::vector<std::optional<std::string>> params;
     std::vector<std::string> fields;
 
-    if (!entity.email->empty())
+    if (entity.email && !entity.email->empty())
     {
         params.emplace_back(entity.email);
         fields.emplace_back("email");
     }
-    if (!entity.username->empty())
+    if (entity.username && !entity.username->empty())
     {
         params.emplace_back(entity.username);
         fields.emplace_back("username");
     }
-    if (!entity.password->empty())
+    if (entity.password && !entity.password->empty())
     {
         params.emplace_back(entity.password);
+        fields.emplace_back("password");
     }
-    if (!entity.picture->empty())
+    if (entity.picture && !entity.picture->empty())
     {
         params.emplace_back(entity.picture);
         fields.emplace_back("picture");
     };
     LoggerSingleton::get().debug("UsersRepository::update: emplaced fields to update", {
-        {"size", params.size()}
+        {"params_size", std::to_string(params.size())},
+        {"fields_size", std::to_string(fields.size())}
     });
 
+    SQLBuilder qb("users");
+    qb.update(fields);
+    // NOTE: remember to add where with id, in other case you will update each row in table!
+    // To provide WHERE $3 in this case
+    params.emplace_back(std::to_string(entity.id));
+    qb.where("id", entity.id);
+    qb.returning("id");
 
-    co_return;
+    auto result = co_await pool_->query(
+        qb.str(),
+        // Remember to coordinate params and fields order to ensure SQL build correctly
+        params,
+        std::chrono::seconds(5)
+    );
 }

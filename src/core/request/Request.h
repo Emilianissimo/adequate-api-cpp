@@ -34,12 +34,19 @@ public:
 
     using RawRequest = http::request<http::string_body>;
 
+    std::string schema;
     std::string host;
+    std::string absoluteHost;
 
     explicit Request(RawRequest req, const EnvConfig& env) : req_(std::move(req)), env_(env)
     {
         if (auto it = req_.find(http::field::host); it != req_.end())
             host = std::string(it->value());
+
+        if (auto it = req_.find("x-forwarded-proto"); it != req_.end())
+            schema = std::string(it->value());
+
+        absoluteHost += schema + "://" + host + "/";
     }
 
     [[nodiscard]] const RawRequest& raw() const { return req_; }

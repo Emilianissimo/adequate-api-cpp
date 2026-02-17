@@ -20,7 +20,7 @@ net::awaitable<Outcome> UsersController::index(const Request& request) const {
 
     std::vector<UserSerializer> users = co_await service_.list(
         filters,
-        request.host
+        request.absoluteHost
     );
 
     LoggerSingleton::get().debug("Converting serializer to JSON");

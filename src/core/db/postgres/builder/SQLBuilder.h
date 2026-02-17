@@ -4,6 +4,8 @@
 #include <optional>
 #include <boost/algorithm/string/join.hpp>
 
+#include "core/file_system/FileSystemService.h"
+
 class SQLBuilder {
 public:
     explicit SQLBuilder(std::string tableName)
@@ -35,6 +37,22 @@ public:
         }
 
         this->sql_ += "INSERT INTO " + this->tableName_ + "(" + boost::algorithm::join(fields, ",") + ") VALUES (" + boost::algorithm::join(placeholders, ",") + ")";
+    }
+
+    void update(const std::vector<std::string>& fields = {})
+    {
+        if (fields.empty())
+        {
+            throw std::invalid_argument("Fields must be provided for UPDATE");
+        }
+
+        std::vector<std::string> sets;
+        sets.reserve(fields.size());
+
+        for (const auto& f : fields)
+            sets.push_back(f + " = $" + std::to_string(nextIndex()));
+
+        this->sql_ += "UPDATE " + this->tableName_ + " SET " + boost::algorithm::join(sets, ",");
     }
 
     void returning(const std::string& field) {
