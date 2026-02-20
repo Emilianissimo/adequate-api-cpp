@@ -4,8 +4,6 @@
 
 #ifndef BEAST_API_PASSWORDHASHERINTERFACE_H
 #define BEAST_API_PASSWORDHASHERINTERFACE_H
-
-#pragma once
 #include <string>
 
 namespace app::security {

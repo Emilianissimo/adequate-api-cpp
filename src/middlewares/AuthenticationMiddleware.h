@@ -2,7 +2,6 @@
 // Created by Emil Erofeevskiy on 30/11/25.
 //
 
-#pragma once
 #ifndef BEAST_API_AUTHENTICATIONMIDDLEWARE_H
 #define BEAST_API_AUTHENTICATIONMIDDLEWARE_H
 #include "core/interfaces/MiddlewareInterface.h"

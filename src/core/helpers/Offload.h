@@ -1,7 +1,5 @@
 #ifndef BEAST_API_OFFLOAD_H
 #define BEAST_API_OFFLOAD_H
-
-#pragma once
 #include <boost/asio.hpp>
 #include <optional>
 #include <exception>

@@ -5,8 +5,6 @@
 #ifndef BEAST_API_FILESYSTEMSERVICE_H
 #define BEAST_API_FILESYSTEMSERVICE_H
 
-#pragma once
-
 #include <filesystem>
 #include <string>
 #include <string_view>

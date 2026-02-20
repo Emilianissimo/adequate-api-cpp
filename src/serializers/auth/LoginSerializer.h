@@ -1,4 +1,3 @@
-#pragma once
 #ifndef BEAST_API_LOGINSERIALIZER_H
 #define BEAST_API_LOGINSERIALIZER_H
 #include <regex>

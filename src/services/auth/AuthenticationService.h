@@ -1,4 +1,3 @@
-#pragma once
 #ifndef BEAST_API_AUTHENTICATIONSERVICE_H
 #define BEAST_API_AUTHENTICATIONSERVICE_H
 #include "core/hashers/SodiumPasswordHasher.h"

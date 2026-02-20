@@ -1,7 +1,6 @@
 //
 // Created by Emil Erofeevskiy on 29/09/25.
 //
-#pragma once
 #ifndef BEAST_API_JWTSERVICE_H
 #define BEAST_API_JWTSERVICE_H
 

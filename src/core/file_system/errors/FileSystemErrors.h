@@ -5,7 +5,6 @@
 #ifndef BEAST_API_FILESYSTEMERRORS_H
 #define BEAST_API_FILESYSTEMERRORS_H
 
-#pragma once
 #include <stdexcept>
 
 class FileError : public std::runtime_error

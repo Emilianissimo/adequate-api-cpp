@@ -4,8 +4,6 @@
 
 #ifndef BEAST_API_SODIUMPASSWORDHASHER_H
 #define BEAST_API_SODIUMPASSWORDHASHER_H
-
-#pragma once
 #include "core/hashers/interfaces/PasswordHasherInterface.h"
 #include <sodium.h>
 #include <stdexcept>
