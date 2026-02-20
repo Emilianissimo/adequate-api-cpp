@@ -8,6 +8,6 @@ struct Transaction {
     std::chrono::steady_clock::duration timeout{};
     
     static net::awaitable<Transaction> begin(PgPool& pool, std::chrono::steady_clock::duration timeout);
-    net::awaitable<void> commit() const;
-    net::awaitable<void> rollback() const;
+    [[nodiscard]] net::awaitable<void> commit() const;
+    [[nodiscard]] net::awaitable<void> rollback() const;
 };

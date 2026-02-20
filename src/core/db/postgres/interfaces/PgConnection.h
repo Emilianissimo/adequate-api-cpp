@@ -19,7 +19,7 @@ public:
     net::awaitable<bool> ping();
 
     net::awaitable<PgResult> execParams(
-        std::string_view sql,
+        std::string sql,
         const std::vector<std::optional<std::string>>& params,
         std::chrono::steady_clock::duration timeout
     );

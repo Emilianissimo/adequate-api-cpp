@@ -90,6 +90,7 @@ net::awaitable<void> PgConnection::connect() {
     stream_descriptor_.emplace(executor_, fd);
 
     // Poll until OK
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     while (true) {
         PostgresPollingStatusType st = PQconnectPoll(conn_);
         if (st == PGRES_POLLING_OK) break;
@@ -99,10 +100,8 @@ net::awaitable<void> PgConnection::connect() {
 
         // wait for IO readiness
         if (st == PGRES_POLLING_READING) {
-            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
             co_await wait_readable(deadline);
         } else if (st == PGRES_POLLING_WRITING) {
-            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
             co_await wait_writable(deadline);
         } else {
             // continue
@@ -144,7 +143,7 @@ net::awaitable<void> PgConnection::rollback(const std::chrono::steady_clock::dur
 }
 
 net::awaitable<PgResult> PgConnection::execParams(
-    const std::string_view sql,
+    const std::string sql,
     const std::vector<std::optional<std::string>>& params,
     const std::chrono::steady_clock::duration timeout
 ) {
@@ -167,7 +166,7 @@ net::awaitable<PgResult> PgConnection::execParams(
     auto send = [&]() -> int {
         return PQsendQueryParams(
             conn_,
-            std::string(sql).c_str(),
+            sql.c_str(),
             static_cast<int>(params.size()),
             nullptr, // infer types
             values.data(),
@@ -426,8 +425,10 @@ net::awaitable<PgResult> PgConnection::runQueryWithTimeout(
                     have_result = true;
                 } else if (st == PGRES_COMMAND_OK) {
                     // command without rows — keep last status
-                    out = {}; // empty
-                    have_result = true;
+                    if (!have_result) {
+                        out = {};
+                        have_result = true;
+                    }
                 } else if (st == PGRES_BAD_RESPONSE || st == PGRES_FATAL_ERROR) {
                     std::string em = PQresultErrorMessage(r) ? PQresultErrorMessage(r) : "query error";
                     std::string sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE)

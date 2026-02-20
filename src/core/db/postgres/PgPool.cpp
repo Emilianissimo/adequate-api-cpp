@@ -5,6 +5,8 @@
 #include <deque>
 #include <stdexcept>
 
+#include "core/errors/Errors.h"
+
 namespace net = boost::asio;
 
 PgPool::PgPool(net::any_io_executor executor, std::string dsn, const std::size_t size)
@@ -31,30 +33,36 @@ net::awaitable<PgPool::Lease> PgPool::acquire() {
 void PgPool::shutdown() {
     net::dispatch(strand_, [this] {
         stopping_ = true;
-        if (created_at_ >= idle_.size()) {
-            created_at_ -= idle_.size();
-        } else {
-            created_at_ = 0;
-        }
+        channel_.close();
+
         for (std::shared_ptr<PgConnection>& c : idle_) {
             c.reset(); // dtor PgConnection → PQfinish
         }
         idle_.clear();
+        created_at_ = 0;
     });
 }
 
 net::awaitable<PgResult> PgPool::query(
-    const std::string_view sql,
+    const std::string& sql,
     const std::vector<std::optional<std::string>>& params,
     const std::chrono::steady_clock::duration timeout
 ) {
     auto [connection, release] = co_await acquire();
     try {
         auto res = co_await connection->execParams(sql, params, timeout);
+        breaker_.on_success();
         release();
         co_return res;
-    } catch (...) {
+    } catch (const DbError&) {
         // if connection is broken, drop it (release() will health-check)
+        // Breaker shouldn't react on SQL errors
+        release();
+        throw;
+    } catch (...)
+    {
+        // Infra errors, breaker should run failure protocol
+        breaker_.on_failure(std::chrono::steady_clock::now());
         release();
         throw;
     }
@@ -68,6 +76,11 @@ net::awaitable<std::shared_ptr<PgConnection>> PgPool::make_or_wait() {
         throw std::runtime_error("PgPool is shutting down");
     }
 
+    auto now = std::chrono::steady_clock::now();
+    if (!breaker_.allow(now)) {
+        throw std::runtime_error("Database temporarily unavailable (circuit open)");
+    }
+
     // 1) Reuse idle if any
     if (!idle_.empty()) {
         std::shared_ptr<PgConnection> c = idle_.back();
@@ -77,24 +90,24 @@ net::awaitable<std::shared_ptr<PgConnection>> PgPool::make_or_wait() {
 
     // 2) Create new if capacity allows
     if (created_at_ < size_) {
-        std::shared_ptr<PgConnection> c = std::make_shared<PgConnection>(executor_, dsn_);
-        ++created_at_;
-        // connect now (may throw)
-        co_await c->connect();
-        co_return c;
+        std::shared_ptr<PgConnection> c = std::make_shared<PgConnection>(strand_, dsn_);
+
+        try
+        {
+            co_await c->connect();   // if it is failed -> infra error
+            ++created_at_;
+            breaker_.on_success();
+            co_return c;
+        } catch (...) {
+            breaker_.on_failure(std::chrono::steady_clock::now());
+            // created at shouldn't be touched then
+            throw;
+        }
     }
 
     // 3) Wait on channel for a returned connection
-    const std::tuple<std::error_code, std::shared_ptr<PgConnection>> tup = co_await channel_.async_receive(
-        net::as_tuple(net::use_awaitable_t<net::any_io_executor>{})
-    );
-
-    std::error_code ec  = std::get<0>(tup);
-    std::shared_ptr<PgConnection> got = std::get<1>(tup);
-
-    if (ec) {
-        throw boost::system::system_error(ec);
-    }
+    auto [ec, got] = co_await channel_.async_receive(net::as_tuple(net::use_awaitable));
+    if (ec) throw boost::system::system_error(ec);
     co_return got;
 }
 
@@ -103,10 +116,12 @@ void PgPool::release(std::shared_ptr<PgConnection> connection) {
     net::dispatch(strand_, [this, c = std::move(connection)]() mutable {
         if (stopping_) {
             if (created_at_) --created_at_;
+            c.reset();
             return; // drop
         }
         if (!c->healthy()) {
             if (created_at_) --created_at_;
+            c.reset();
             return; // drop
         }
         if (channel_.try_send(boost::system::error_code{}, c)) {
