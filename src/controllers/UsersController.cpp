@@ -74,7 +74,7 @@ net::awaitable<Outcome> UsersController::store(const Request& request) const {
 
     UserCreateResponseSerializer user;
     try {
-        user = co_await service_.create(serializer);        
+        user = co_await service_.create(serializer);
     } catch (const ValidationError& e) {
         error_msg = e.what();
         LoggerSingleton::get().warn(
@@ -175,7 +175,7 @@ net::awaitable<Outcome> UsersController::update(const Request& request) const
     } catch (const ValidationError& e) {
         error_msg = e.what();
         LoggerSingleton::get().warn(
-            "UsersController::update: User creation failed: " + (error_msg.has_value() ? *error_msg : "")
+            "UsersController::update: User update failed: " + (error_msg.has_value() ? *error_msg : "")
         );
     }
 

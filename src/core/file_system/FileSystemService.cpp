@@ -11,7 +11,6 @@
 #include <regex>
 #include <system_error>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/use_awaitable.hpp>
 
 #include "core/file_system/magic_mime/MagicMimeDetector.h"
 #include "core/loggers/LoggerSingleton.h"
