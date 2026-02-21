@@ -1,0 +1,99 @@
+services:
+  test_e2e:
+    build:
+      context: .
+      dockerfile: docker/e2e/app_build/Dockerfile
+    working_dir: /work
+    volumes:
+      - ./:/work:rw
+    env_file:
+      - .env.test
+    networks:
+      - test_cpp_api
+    command: [ "bash", "-lc", "cmake -S . -B build -G Ninja -DENABLE_TESTS=ON && cmake --build build -j && ctest --test-dir build -V" ]
+
+  test_app:
+    build:
+      context: .
+      dockerfile: docker/app_build/Dockerfile
+    working_dir: /work
+    env_file:
+      - .env.test
+    depends_on:
+      test_db:
+        condition: service_healthy
+      test_redis:
+        condition: service_healthy
+      test_migrate:
+        condition: service_completed_successfully
+    networks:
+      - test_cpp_api
+
+  test_nginx:
+    build:
+      context: .
+      dockerfile: docker/e2e/nginx/Dockerfile
+    ports:
+      - "8111:80"
+    depends_on:
+      - test_app
+    networks:
+      - test_cpp_api
+
+  test_redis:
+    image: redis:alpine
+    restart: on-failure
+    env_file:
+      - .env.test
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
+    ports:
+      - "63791:6379"
+    command:
+      - redis-server
+      - --requirepass
+      - "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+    networks:
+      - test_cpp_api
+
+  test_db:
+    image: postgres:16.0-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    ports:
+      - "54432:5432"
+    networks:
+      - test_cpp_api
+
+  test_migrate:
+    image: migrate/migrate:4
+    depends_on:
+      test_db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    env_file:
+      - .env.test
+    entrypoint: ["migrate", "-path", "/migrations", "-database", "${DATABASE_MIGRATION_URL}", "up"]
+    networks: [test_cpp_api]
+
+volumes:
+  test_db:
+    driver: local
+  test_cache:
+    driver: local
+
+networks:
+  test_cpp_api:
+    driver: bridge

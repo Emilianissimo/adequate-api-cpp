@@ -127,15 +127,7 @@ elseif(WIN32)
         src/*.cpp
     )
 
-    add_executable(app ${APP_SOURCES}
-            src/core/file_system/FileSystemService.cpp
-            src/core/file_system/FileSystemService.h
-            src/core/file_system/errors/FileSystemErrors.h
-            src/core/file_system/magic_mime/MagicMimeDetector.cpp
-            src/core/file_system/magic_mime/MagicMimeDetector.h
-            src/core/hashers/interfaces/PasswordHasherInterface.h
-            src/core/hashers/SodiumPasswordHasher.h
-            src/core/helpers/Offload.h)
+    add_executable(app ${APP_SOURCES})
 
     target_link_libraries(app
         PRIVATE
@@ -162,3 +154,11 @@ elseif(WIN32)
 endif()
 
 target_compile_definitions(app PRIVATE HAVE_LIBMAGIC=1)
+
+# Testing
+option(ENABLE_TESTS "Enable unit and e2e tests" ON)
+
+if (ENABLE_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

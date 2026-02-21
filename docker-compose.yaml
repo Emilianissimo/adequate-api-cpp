@@ -23,7 +23,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.test.conf:ro
       - ./media:/work/media:ro
     depends_on:
       - app
@@ -35,13 +35,16 @@ services:
     container_name: cpp_api_redis_container
     restart: on-failure
     healthcheck:
-      test: ["CMD", "sh", "-lc", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      test: ["CMD-SHELL", "redis-cli -a \"$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 5s
       timeout: 2s
       retries: 10
+    env_file:
+      - .env.test
     command:
       - redis-server
-      - '--requirepass root_123456'
+      - --requirepass
+      - ${REDIS_PASSWORD}
     volumes:
       - cache:/data
     networks:
@@ -49,7 +52,7 @@ services:
 
   db:
     container_name: cpp_api_db_container
-    image: postgres:15.0-alpine
+    image: postgres:16.0-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -75,8 +78,9 @@ services:
         condition: service_healthy
     volumes:
       - ./migrations:/migrations:ro
-    env_file: .env
-    entrypoint: ["migrate", "-path", "/migrations", "-database", "${DATABASE_URL}"]
+    env_file:
+      - .env
+    entrypoint: ["migrate", "-path", "/migrations", "-database", "${DATABASE_MIGRATION_URL}"]
     networks: [cpp_api]
 
 volumes:

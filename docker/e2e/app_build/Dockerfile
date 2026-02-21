@@ -1,6 +1,25 @@
 FROM ubuntu:22.04
 
-# Deps
+# Docker compose V2
+RUN apt-get update && apt-get install -y \
+  ca-certificates curl gnupg lsb-release \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN install -m 0755 -d /etc/apt/keyrings \
+  && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+  && chmod a+r /etc/apt/keyrings/docker.gpg
+
+RUN echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+  > /etc/apt/sources.list.d/docker.list
+
+RUN apt-get update && apt-get install -y \
+  docker-ce-cli docker-compose-plugin \
+  && rm -rf /var/lib/apt/lists/*
+
+# App
+
 RUN apt-get update && apt-get install -y \
     build-essential g++ cmake ninja-build make git curl ca-certificates \
     pkg-config \
@@ -11,7 +30,7 @@ RUN apt-get update && apt-get install -y \
     libsodium-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# --- Boost 1.84+ (for http::message_generator and co_await) ---
+# --- Boost 1.84+ ---
 WORKDIR /tmp
 ENV BOOST_VERSION=1.84.0
 ENV BOOST_DIR=boost_${BOOST_VERSION//./_}
@@ -30,21 +49,4 @@ RUN curl -L https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_DI
  && ldconfig \
  && cd / && rm -rf /tmp/${BOOST_DIR} /tmp/${BOOST_DIR}.tar.bz2
 
-# --- Build ---
 WORKDIR /work
-COPY ../../CMakeLists.txt ./
-COPY ../../src ./src
-
-# Release or Debug
-RUN cmake -S . -B build -G Ninja \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DENABLE_TESTS=OFF \
-    -DCMAKE_CXX_FLAGS="-std=c++20" && \
-    cmake --build build
-
-# Params (rewrites by .env/compose)
-ENV APP_HOST=0.0.0.0
-ENV APP_PORT=8080
-
-EXPOSE 8080
-CMD ["./build/app"]
