@@ -10,15 +10,15 @@
 
 net::awaitable<Outcome> UsersController::index(const Request& request) const {
     LoggerSingleton::get().debug("UsersController::index: called", {
-        {"method", request.method()},
-        {"target", request.target()}
+        {"method", std::string(http::to_string(request.method()))},
+        {"target", std::string(request.target())}
     });
 
     UserListFilter filters;
     filters.parseRequestQuery(request.query());
     filters.limit = std::clamp<std::size_t>(filters.limit.value_or(50), 1, 1000);
 
-    std::vector<UserSerializer> users = co_await service_.list(
+    const std::vector<UserSerializer> users = co_await service_.list(
         filters,
         request.absoluteHost
     );
@@ -39,17 +39,16 @@ net::awaitable<Outcome> UsersController::index(const Request& request) const {
 
 net::awaitable<Outcome> UsersController::store(const Request& request) const {
     LoggerSingleton::get().debug("UsersController::store: called", {
-        {"method", request.method()},
-        {"target", request.target()}
+        {"method", std::string(http::to_string(request.method()))},
+        {"target", std::string(request.target())}
     });
 
     const nlohmann::json body = request.json();
     UserCreateSerializer serializer;
     std::optional<std::string> error_msg;
 
-    // TODO: Clean password value from json to log
     LoggerSingleton::get().debug(
-        "UsersController::store: Validating data by serializer. Data: " + body.dump()
+        "UsersController::store: Validating data by serializer."
     );
     try {
         serializer = serializer.from_json(body);
@@ -104,8 +103,8 @@ net::awaitable<Outcome> UsersController::update(const Request& request) const
     int id = std::stoi(id_str);
 
     LoggerSingleton::get().info("UsersController::update: called", {
-        {"method", request.method()},
-        {"target", request.target()}
+        {"method", std::string(http::to_string(request.method()))},
+        {"target", std::string(request.target())}
     });
 
     nlohmann::json body;
@@ -143,9 +142,8 @@ net::awaitable<Outcome> UsersController::update(const Request& request) const
     UserUpdateSerializer serializer;
     std::optional<std::string> error_msg;
 
-    // TODO: Clean password value from json to log
     LoggerSingleton::get().debug(
-        "UsersController::update: Validating data by serializer. Data: " + body.dump()
+        "UsersController::update: Validating data by serializer."
     );
     try {
         serializer = serializer.from_json(body);

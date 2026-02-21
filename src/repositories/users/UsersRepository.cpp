@@ -91,7 +91,7 @@ net::awaitable<bool> UsersRepository::exists(const UserFilter& filters) const {
     SQLBuilder qb("users");
     const std::vector<std::string> fields{ "1"};
     qb.select(fields);
-    // TODO: may be expanded
+    // NOTE: may be expanded
     if (filters.id.has_value()) {
         qb.where("id", filters.id.value());
     }

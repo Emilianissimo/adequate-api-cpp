@@ -40,6 +40,7 @@ e2e-test-count:
 	docker compose --env-file .env.test -f docker-compose.e2e.yaml run --rm test_e2e bash -lc "ctest --test-dir build -N"
 
 e2e-test:
+	# should run one after another, for windows should be pasted manually or use semicolon separator
 	docker compose --env-file .env.test -f docker-compose.e2e.yaml up -d --build test_db test_redis test_migrate test_app test_nginx
 	docker compose --env-file .env.test -f docker-compose.e2e.yaml run --rm test_e2e
 	docker compose --env-file .env.test -f docker-compose.e2e.yaml down -v --remove-orphans

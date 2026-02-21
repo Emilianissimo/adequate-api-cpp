@@ -4,7 +4,9 @@ file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
 
 add_executable(e2e_tests
         main.cpp ${TEST_SOURCES}
-        api/Health.test.cpp
+        api/Health/HealthResponse.h
+        api/Health/HealthCheckClient.h
+        api/Health/Health.test.cpp
 )
 
 target_link_libraries(

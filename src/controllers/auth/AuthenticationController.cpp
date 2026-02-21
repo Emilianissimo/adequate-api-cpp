@@ -10,8 +10,8 @@
 
 net::awaitable<Outcome> AuthenticationController::registration(Request& request) const {
     LoggerSingleton::get().debug("AuthenticationController::registration: called", {
-        {"method", request.method()},
-        {"target", request.target()}
+        {"method", std::string(http::to_string(request.method()))},
+        {"target", std::string(request.target())}
     });
 
     nlohmann::json body = request.json();
@@ -62,8 +62,8 @@ net::awaitable<Outcome> AuthenticationController::registration(Request& request)
 
 net::awaitable<Outcome> AuthenticationController::login(Request& request) const {
     LoggerSingleton::get().debug("AuthenticationController::login: called", {
-        {"method", request.method()},
-        {"target", request.target()}
+        {"method", std::string(http::to_string(request.method()))},
+        {"target", std::string(request.target())}
     });
 
     nlohmann::json body = request.json();
