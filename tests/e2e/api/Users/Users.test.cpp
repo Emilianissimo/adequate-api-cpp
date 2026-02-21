@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 #include "UsersClient.h"
+#include "../../auth/AuthSession.h"
 
 using nlohmann::json;
 
@@ -23,7 +24,9 @@ static void assertUserShape(const json& u)
 
 TEST(UsersIndex, ReturnsCreatedUsers)
 {
-    test::http::UsersClient api("test_nginx", "80");
+    auto session = test::http::AuthSession::obtain("test_nginx", "80");
+
+    test::http::UsersClient api("test_nginx", "80", session.bearer);
 
     constexpr int N = 20;
 
@@ -50,7 +53,8 @@ TEST(UsersIndex, ReturnsCreatedUsers)
 
 TEST(UsersIndex, AppliesLimit)
 {
-    test::http::UsersClient api("test_nginx", "80");
+    auto session = test::http::AuthSession::obtain("test_nginx", "80");
+    test::http::UsersClient api("test_nginx", "80", session.bearer);
 
     auto [status, body, rawBody] = api.index("limit=10&offset=0");
     ASSERT_EQ(status, boost::beast::http::status::ok) << rawBody;
@@ -62,7 +66,8 @@ TEST(UsersIndex, AppliesLimit)
 
 TEST(UsersStore, Returns422OnInvalidPayload)
 {
-    test::http::UsersClient api("test_nginx", "80");
+    auto session = test::http::AuthSession::obtain("test_nginx", "80");
+    test::http::UsersClient api("test_nginx", "80", session.bearer);
 
     json payload{
         {"username", "bad_user"}
@@ -73,6 +78,41 @@ TEST(UsersStore, Returns422OnInvalidPayload)
     ASSERT_EQ(status, boost::beast::http::status::unprocessable_entity) << rawBody;
     ASSERT_TRUE(body.contains("error"));
     ASSERT_TRUE(body["error"].is_string());
+}
+
+/// UNAUTHORIZED
+
+TEST(UsersAuth, StoreRequiresAuthorization_401)
+{
+    // без bearer
+    test::http::UsersClient api("test_nginx", "80");
+
+    json payload{
+        {"username", "unauth_user"},
+        {"email", "unauth_user@example.com"}
+    };
+
+    auto res = api.store(payload);
+
+    ASSERT_EQ(res.status, boost::beast::http::status::unauthorized) << res.rawBody;
+
+    auto j = json::parse(res.rawBody);
+    ASSERT_TRUE(j.contains("error"));
+    ASSERT_TRUE(j["error"].is_string());
+    ASSERT_EQ(j["error"].get<std::string>(), "Missing Authorization header");
+}
+
+TEST(UsersAuth, IndexRequiresAuthorization_401)
+{
+    test::http::UsersClient api("test_nginx", "80");
+
+    auto res = api.index("limit=10&offset=0");
+
+    ASSERT_EQ(res.status, boost::beast::http::status::unauthorized) << res.rawBody;
+
+    auto j = json::parse(res.rawBody);
+    ASSERT_TRUE(j.contains("error"));
+    ASSERT_TRUE(j["error"].is_string());
 }
 
 //

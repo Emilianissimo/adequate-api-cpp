@@ -26,7 +26,7 @@ namespace test::http
     class TestHttpClient
     {
     public:
-        TestHttpClient(std::string host, std::string port = "80")
+        explicit TestHttpClient(std::string host, std::string port = "80")
             : host_(std::move(host))
             , port_(std::move(port))
             , resolver_(ioc_)
@@ -34,7 +34,7 @@ namespace test::http
 
         HttpResponse get(const std::string& target, const std::multimap<std::string, std::string>& headers = {})
         {
-            return request(http::verb::get, target, "", headers);
+            return request(http::verb::get, target, "", merge(headers));
         }
 
         HttpResponse postJson(const std::string& target,
@@ -43,7 +43,11 @@ namespace test::http
         {
             auto h = headers;
             h.emplace("content-type", "application/json");
-            return request(http::verb::post, target, jsonBody, h);
+            return request(http::verb::post, target, jsonBody, merge(h));
+        }
+
+        void setDefaultHeader(std::string k, std::string v) {
+            defaultHeaders_.emplace(std::move(k), std::move(v));
         }
 
     private:
@@ -53,6 +57,14 @@ namespace test::http
         net::io_context ioc_;
         tcp::resolver resolver_;
         beast::tcp_stream stream_;
+
+        std::multimap<std::string,std::string> defaultHeaders_;
+
+        std::multimap<std::string,std::string> merge(const std::multimap<std::string,std::string>& h) const {
+            auto out = defaultHeaders_;
+            out.insert(h.begin(), h.end());
+            return out;
+        }
 
         HttpResponse request(
             http::verb method,

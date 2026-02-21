@@ -155,9 +155,13 @@ endif()
 
 target_compile_definitions(app PRIVATE HAVE_LIBMAGIC=1)
 
+option(APP_PWHASH_TEST_PROFILE "Use low pwhash limits (test profile)" OFF)
+if (APP_PWHASH_TEST_PROFILE)
+    target_compile_definitions(app PRIVATE APP_PWHASH_TEST_PROFILE=1)
+endif()
+
 # Testing
 option(ENABLE_TESTS "Enable unit and e2e tests" ON)
-
 if (ENABLE_TESTS)
     enable_testing()
     add_subdirectory(tests)

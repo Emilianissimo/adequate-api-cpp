@@ -16,6 +16,8 @@ services:
     build:
       context: .
       dockerfile: docker/app_build/Dockerfile
+      args:
+        CMAKE_EXTRA_FLAGS: "-DAPP_PWHASH_TEST_PROFILE=ON"
     working_dir: /work
     env_file:
       - .env.test

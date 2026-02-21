@@ -17,8 +17,12 @@ namespace test::http
     class UsersClient
     {
     public:
-        UsersClient(std::string host, std::string port)
-        : client_(std::move(host), std::move(port)) {}
+        UsersClient(std::string host, std::string port, const std::string& bearer = {})
+        : client_(std::move(host), std::move(port))
+        {
+            if (!bearer.empty())
+                client_.setDefaultHeader("Authorization", bearer);
+        }
 
         UsersIndexResponse index(const std::string& query = "")
         {

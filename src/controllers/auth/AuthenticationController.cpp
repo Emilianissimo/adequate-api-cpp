@@ -14,7 +14,7 @@ net::awaitable<Outcome> AuthenticationController::registration(Request& request)
         {"target", std::string(request.target())}
     });
 
-    nlohmann::json body = request.json();
+    const nlohmann::json body = request.json();
     RegisterSerializer serializer;
     std::optional<std::string> error_msg;
 

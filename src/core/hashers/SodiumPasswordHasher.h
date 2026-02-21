@@ -19,11 +19,11 @@ struct PwhashParams {
 
 class SodiumPasswordHasher final : public PasswordHasherInterface {
 public:
-    explicit SodiumPasswordHasher(const PwhashParams params = defaultInteractive())
+    explicit SodiumPasswordHasher(const PwhashParams params = defaultForBuild())
         : params_(params) {}
 
     std::string hash(const std::string& password) const override {
-        auto out = std::make_unique<char[]>(crypto_pwhash_STRBYTES);
+        const auto out = std::make_unique<char[]>(crypto_pwhash_STRBYTES);
 
         // crypto_pwhash_str returns string: $argon2id$... (salt+params)
         if (crypto_pwhash_str(
@@ -63,6 +63,15 @@ public:
         }
 
         return true;
+    }
+
+    static PwhashParams defaultForBuild()
+    {
+#if defined(APP_PWHASH_TEST_PROFILE) && APP_PWHASH_TEST_PROFILE
+        return { crypto_pwhash_OPSLIMIT_MIN, crypto_pwhash_MEMLIMIT_MIN };
+#else
+        return defaultInteractive();
+#endif
     }
 
     static PwhashParams defaultInteractive() {
