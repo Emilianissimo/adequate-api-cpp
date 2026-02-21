@@ -38,7 +38,7 @@ int main() {
         std::thread::hardware_concurrency()
     );
     app::security::SodiumPasswordHasher passwordHasher{
-        app::security::SodiumPasswordHasher::defaultInteractive()
+        app::security::SodiumPasswordHasher::defaultForBuild()
     };
 
     // DI context
@@ -46,9 +46,7 @@ int main() {
     ctx->pg = std::make_shared<PgPool>(ioc.get_executor(), env.pg_dsn, env.pg_pool_size);
     ctx->blockingPool = blockingPool;
     ctx->config = env;
-    ctx->passwordHasher = std::make_shared<app::security::SodiumPasswordHasher>(
-    app::security::SodiumPasswordHasher::defaultInteractive()
-    );
+    ctx->passwordHasher = std::make_shared<app::security::SodiumPasswordHasher>(passwordHasher);
     appctx::init(ctx);
     appctx::wire(ctx);
     // plug any other
