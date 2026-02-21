@@ -6,6 +6,10 @@ add_executable(e2e_tests
         main.cpp ${TEST_SOURCES}
 )
 
+if (APP_PWHASH_TEST_PROFILE)
+    target_compile_definitions(e2e_tests PRIVATE APP_PWHASH_TEST_PROFILE=1)
+endif()
+
 target_link_libraries(
         e2e_tests
         PRIVATE

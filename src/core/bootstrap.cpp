@@ -51,7 +51,7 @@ public:
                 RawRequest raw = parser.release();
                 Request req(std::move(raw), env_);
 
-                Response res = co_await router_.dispatch(req, env_);
+                Response res = co_await router_.dispatch(std::move(req), env_);
 
                 bool keep = res.keep_alive();
 

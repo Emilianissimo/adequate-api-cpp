@@ -198,10 +198,10 @@ Router::RouteEntry Router::compileRoute(const std::string& tmpl)
     return {std::regex(regexStr), params, {}, tmpl};
 }
 
-net::awaitable<Response> Router::dispatch(Request& request, const EnvConfig& env) const {
+net::awaitable<Response> Router::dispatch(Request request, const EnvConfig& env) const {
     LoggerSingleton::get().info("Router::dispatch: called", {
-        {"method", request.method()},
-        {"target", request.target()}
+        {"method", std::string(http::to_string(request.method()))},
+        {"target", std::string(request.target())}
     });
     int error_code = 0;
     std::string error_msg;

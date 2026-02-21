@@ -43,7 +43,7 @@ public:
     /// Use locally (scoped)
     Router& use(std::string pathPrefix, std::shared_ptr<MiddlewareInterface> middleware);
 
-    net::awaitable<Response> dispatch(Request& request, const EnvConfig& env) const;
+    net::awaitable<Response> dispatch(Request request, const EnvConfig& env) const;
 
 private:
     struct RouteEntry {

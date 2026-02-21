@@ -95,6 +95,11 @@ public:
         };
     }
 
+    PwhashParams params() const
+    {
+        return params_;
+    }
+
 private:
     PwhashParams params_;
 };

@@ -55,12 +55,12 @@ net::awaitable<Outcome> UsersController::store(const Request& request) const {
     } catch (const ValidationError& e) {
         error_msg = e.what();
         LoggerSingleton::get().warn(
-            "UsersController::store: Validation failed, error: " + (error_msg.has_value() ? *error_msg : "")
+            "UsersController::store: Validation failed, error: " + (error_msg.has_value() ? error_msg.value() : "")
         );
     }
 
     LoggerSingleton::get().debug(
-        "UsersController::store: Checking up if any error occurred. Error msg: " + (error_msg.has_value() ? *error_msg : "")
+        "UsersController::store: Checking up if any error occurred. Error msg: " + (error_msg.has_value() ? error_msg.value() : "")
     );
     if (error_msg){
         JsonResult error_response{

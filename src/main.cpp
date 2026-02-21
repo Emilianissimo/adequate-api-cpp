@@ -41,6 +41,11 @@ int main() {
         app::security::SodiumPasswordHasher::defaultForBuild()
     };
 
+    LoggerSingleton::get().info("pwhash params", {
+      {"opslimit", std::to_string(passwordHasher.params().opslimit)},
+      {"memlimit", std::to_string(passwordHasher.params().memlimit)},
+    });
+
     // DI context
     const auto ctx = std::make_shared<AppContext>();
     ctx->pg = std::make_shared<PgPool>(ioc.get_executor(), env.pg_dsn, env.pg_pool_size);

@@ -6,11 +6,16 @@ services:
     working_dir: /work
     volumes:
       - ./:/work:rw
+    depends_on:
+      test_nginx:
+        condition: service_started
+      test_app:
+        condition: service_started
     env_file:
       - .env.test
     networks:
       - test_cpp_api
-    command: [ "bash", "-lc", "cmake -S . -B build -G Ninja -DENABLE_TESTS=ON && cmake --build build -j && ctest --test-dir build -V" ]
+    command: [ "bash", "-lc", "cmake -S . -B build -G Ninja -DENABLE_TESTS=ON -DAPP_PWHASH_TEST_PROFILE=ON && cmake --build build -j && ctest --test-dir build -V" ]
 
   test_app:
     build:
