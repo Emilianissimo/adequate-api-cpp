@@ -20,6 +20,7 @@ namespace test::http
     {
         http::status status;
         std::string body;
+        std::multimap<std::string, std::string> headers;
     };
 
     class TestHttpClient
@@ -31,27 +32,18 @@ namespace test::http
             , resolver_(ioc_)
             , stream_(ioc_) {}
 
-        HttpResponse get(std::string target)
+        HttpResponse get(const std::string& target, const std::multimap<std::string, std::string>& headers = {})
         {
-            auto const results = resolver_.resolve(host_, port_);
-            stream_.connect(results);
+            return request(http::verb::get, target, "", headers);
+        }
 
-            http::request<http::empty_body> req{http::verb::get, target, 11};
-            req.set(http::field::host, host_);
-            req.set(http::field::user_agent, "e2e-test-client");
-
-            http::write(stream_, req);
-
-            beast::flat_buffer buffer;
-            http::response<http::string_body> res;
-            http::read(stream_, buffer, res);
-
-            stream_.socket().shutdown(tcp::socket::shutdown_both);
-
-            return {
-            res.result(),
-                res.body()
-            };
+        HttpResponse postJson(const std::string& target,
+                          const std::string& jsonBody,
+                          const std::multimap<std::string, std::string>& headers = {})
+        {
+            auto h = headers;
+            h.emplace("content-type", "application/json");
+            return request(http::verb::post, target, jsonBody, h);
         }
 
     private:
@@ -61,6 +53,46 @@ namespace test::http
         net::io_context ioc_;
         tcp::resolver resolver_;
         beast::tcp_stream stream_;
+
+        HttpResponse request(
+            http::verb method,
+            const std::string& target,
+            const std::string& body,
+            const std::multimap<std::string, std::string>& headers
+        )
+        {
+            auto const results = resolver_.resolve(host_, port_);
+            stream_.connect(results);
+
+            http::request<http::string_body> req{method, target, 11};
+            req.set(http::field::host, host_);
+            req.set(http::field::user_agent, "e2e-test-client");
+            req.keep_alive(false);
+
+            for (auto& [k, v] : headers) req.set(k, v);
+
+            req.body() = body;
+            req.prepare_payload();
+
+            http::write(stream_, req);
+
+            beast::flat_buffer buffer;
+            http::response<http::string_body> res;
+            http::read(stream_, buffer, res);
+
+            beast::error_code ec;
+            stream_.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+            HttpResponse out;
+            out.status = res.result();
+            out.body   = res.body();
+
+            for (auto const& f : res.base()) {
+                out.headers.emplace(std::string(f.name_string()), std::string(f.value()));
+            }
+
+            return out;
+        }
     };
 } // namespace test::http
 

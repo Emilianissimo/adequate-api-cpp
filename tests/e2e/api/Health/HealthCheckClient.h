@@ -17,7 +17,7 @@ namespace test::http
 
         HealthResponse check()
         {
-            auto [status, body] = client_.get("/health");
+            auto [status, body, _] = client_.get("/health");
 
             return HealthResponse::from(status, body);
         }
