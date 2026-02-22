@@ -28,8 +28,8 @@ struct OffloadState {
     net::executor_work_guard<net::any_io_executor> work;
     std::optional<Handler> h;
 
-    std::shared_ptr<std::atomic_bool> cancelled =
-        std::make_shared<std::atomic_bool>(false);
+    std::atomic_bool cancelled{false};
+    std::atomic_bool completed{false};
 
     std::exception_ptr ep;
     std::optional<R> result;
@@ -59,15 +59,30 @@ auto async_offload(Executor blockingEx, Fn fn)
 
                 auto slot = net::get_associated_cancellation_slot(*st->h);
                 if (slot.is_connected()) {
-                    slot.assign([st](net::cancellation_type ct) {
-                        st->cancel_type = ct;
-                        st->cancelled->store(true, std::memory_order_relaxed);
+                    std::weak_ptr<St> wst = st;
+                    slot.assign([ioEx, wst](net::cancellation_type ct){
+                        if (auto st = wst.lock()) {
+                            st->cancel_type = ct;
+                            st->cancelled.store(true, std::memory_order_relaxed);
+
+                            // try to COMPLETE immediately
+                            net::post(ioEx, [st]() mutable {
+                                if (st->completed.exchange(true, std::memory_order_acq_rel))
+                                    return;
+
+                                if (!st->h) return; // just in case
+                                auto h = std::move(*st->h);
+                                st->h.reset();
+
+                                h(make_operation_aborted_ep());
+                            });
+                        }
                     });
                 }
 
                 net::post(blockingEx, [ioEx, st, func = std::move(func)]() mutable {
                     try {
-                        if (!st->cancelled->load(std::memory_order_relaxed)) {
+                        if (!st->cancelled.load(std::memory_order_relaxed)) {
                             func();
                         } else {
                             st->ep = make_operation_aborted_ep();
@@ -76,12 +91,16 @@ auto async_offload(Executor blockingEx, Fn fn)
                         st->ep = std::current_exception();
                     }
 
-                    net::dispatch(ioEx, [st]() mutable {
-                        auto ep = st->ep;
-                        (*st->h)(ep);
-
-                        // critical: destroy handler on ioEx
+                    net::post(ioEx, [st]() mutable {
+                        if (st->completed.exchange(true, std::memory_order_acq_rel))
+                            return;
+                    // move handler out BEFORE calling it
+                        auto h = std::move(*st->h);
                         st->h.reset();
+
+                        auto ep  = st->ep;
+
+                        h(ep);
                     });
                 });
             },
@@ -105,15 +124,30 @@ auto async_offload(Executor blockingEx, Fn fn)
 
                     auto slot = net::get_associated_cancellation_slot(*st->h);
                     if (slot.is_connected()) {
-                        slot.assign([st](net::cancellation_type ct) {
-                            st->cancel_type = ct;
-                            st->cancelled->store(true, std::memory_order_relaxed);
+                        std::weak_ptr<St> wst = st;
+                        slot.assign([ioEx, wst](net::cancellation_type ct){
+                            if (auto st = wst.lock()) {
+                                st->cancel_type = ct;
+                                st->cancelled.store(true, std::memory_order_relaxed);
+
+                                // try to COMPLETE immediately
+                                net::post(ioEx, [st]() mutable {
+                                    if (st->completed.exchange(true, std::memory_order_acq_rel))
+                                        return;
+
+                                    if (!st->h) return; // just in case
+                                    auto h = std::move(*st->h);
+                                    st->h.reset();
+
+                                    h(make_operation_aborted_ep(), std::optional<R>{});
+                                });
+                            }
                         });
                     }
 
                     net::post(blockingEx, [ioEx, st, func = std::move(func)]() mutable {
                         try {
-                            if (!st->cancelled->load(std::memory_order_relaxed)) {
+                            if (!st->cancelled.load(std::memory_order_relaxed)) {
                                 st->result.emplace(func());
                             } else {
                                 st->ep = make_operation_aborted_ep();
@@ -122,14 +156,17 @@ auto async_offload(Executor blockingEx, Fn fn)
                             st->ep = std::current_exception();
                         }
 
-                        net::dispatch(ioEx, [st]() mutable {
+                        net::post(ioEx, [st]() mutable {
+                            if (st->completed.exchange(true, std::memory_order_acq_rel))
+                                return;
+                            // move handler out BEFORE calling it
+                            auto h = std::move(*st->h);
+                            st->h.reset();
+
                             auto ep  = st->ep;
                             auto res = std::move(st->result);
 
-                            (*st->h)(ep, std::move(res));
-
-                            // critical: destroy handler on ioEx
-                            st->h.reset();
+                            h(ep, std::move(res));
                         });
                     });
                 },
