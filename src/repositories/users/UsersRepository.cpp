@@ -31,7 +31,7 @@ net::awaitable<std::vector<UserEntity>> UsersRepository::getList(UserListFilter&
         qb.limit(filters.limit.value());
     }
     if (filters.offset.has_value()) {
-        qb.limit(filters.offset.value());
+        qb.offset(filters.offset.value());
     }
 
     PgResult result = co_await pool_->query(

@@ -57,9 +57,19 @@ public:
 
     [[nodiscard]] std::unordered_map<std::string, std::string> query() const {
         std::unordered_map<std::string, std::string> params;
-        
-        boost::urls::url_view url_view_(this->target());
-        for (auto qp : url_view_.params()) {
+
+        auto target = std::string(this->target());
+
+        auto r = boost::urls::parse_origin_form(target);
+        if (!r) {
+            LoggerSingleton::get().warn("Request::query: failed to parse target as origin-form", {
+                {"target", target},
+                {"error", r.error().message()}
+            });
+            return params;
+        }
+
+        for (const auto uv = r.value(); auto const& qp : uv.params()) {
             params.emplace(std::string(qp.key), std::string(qp.value));
         }
         return params;

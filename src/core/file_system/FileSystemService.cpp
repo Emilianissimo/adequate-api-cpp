@@ -102,7 +102,7 @@ StoredFileInfo FileSystemService::store(
 void FileSystemService::remove(const std::filesystem::path& relativePath) const
 {
     LoggerSingleton::get().info("FileSystemService::remove: called", {
-        {"relativePath", relativePath},
+        {"relativePath", relativePath.string()},
     });
     if (relativePath.empty()) return;
 
@@ -117,10 +117,10 @@ void FileSystemService::remove(const std::filesystem::path& relativePath) const
     }
 }
 
-bool FileSystemService::exists(std::filesystem::path relativePath) const
+bool FileSystemService::exists(const std::filesystem::path& relativePath) const
 {
     LoggerSingleton::get().info("FileSystemService::exists: called", {
-        {"relativePath", relativePath},
+        {"relativePath", relativePath.string()},
     });
     if (relativePath.empty()) return false;
     const std::filesystem::path fullPath = opts_.rootPath / relativePath;

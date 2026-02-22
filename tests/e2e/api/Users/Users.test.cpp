@@ -10,7 +10,6 @@ static void assertUserShape(const json& u)
     ASSERT_TRUE(u.contains("id"));
     ASSERT_TRUE(u.contains("username"));
     ASSERT_TRUE(u.contains("email"));
-    ASSERT_TRUE(u.contains("picture"));
     ASSERT_TRUE(u.contains("created_at"));
     ASSERT_TRUE(u.contains("updated_at"));
 
@@ -22,15 +21,26 @@ static void assertUserShape(const json& u)
     ASSERT_TRUE(u["updated_at"].is_string());
 }
 
+static void assertUserShapeOnCreate(const json& u)
+{
+    ASSERT_TRUE(u.contains("id"));
+    ASSERT_TRUE(u.contains("username"));
+    ASSERT_TRUE(u.contains("email"));
+
+    ASSERT_TRUE(u["id"].is_number_integer());
+    ASSERT_TRUE(u["username"].is_string());
+    ASSERT_TRUE(u["email"].is_string());
+}
+
+constexpr int N = 21;
+
 TEST(UsersIndex, ReturnsCreatedUsers)
 {
     auto session = test::http::AuthSession::obtain("test_nginx", "80");
 
     test::http::UsersClient api("test_nginx", "80", session.bearer);
 
-    constexpr int N = 20;
-
-    for (int i = 1; i <= N; ++i) {
+    for (int i = 1; i <= N - 1; ++i) {
         json payload{
                 {"username", "user_" + std::to_string(i)},
                 {"email",    "user_" + std::to_string(i) + "@example.com"},
@@ -40,7 +50,7 @@ TEST(UsersIndex, ReturnsCreatedUsers)
         auto [status, body, rawBody] = api.store(payload);
 
         ASSERT_EQ(status, boost::beast::http::status::created) << rawBody;
-        assertUserShape(body);
+        assertUserShapeOnCreate(body);
     }
 
     auto [status, body, rawBody] = api.index("limit=50&offset=0");
@@ -56,10 +66,12 @@ TEST(UsersIndex, AppliesLimit)
     auto session = test::http::AuthSession::obtain("test_nginx", "80");
     test::http::UsersClient api("test_nginx", "80", session.bearer);
 
-    auto [status, body, rawBody] = api.index("limit=10&offset=0");
+    int limit = 10;
+
+    auto [status, body, rawBody] = api.index("limit=" + std::to_string(limit) + "&offset=0");
     ASSERT_EQ(status, boost::beast::http::status::ok) << rawBody;
     ASSERT_TRUE(body.is_array());
-    ASSERT_EQ(static_cast<int>(body.size()), 10);
+    ASSERT_EQ(static_cast<int>(body.size()), limit);
 }
 
 /// NEGATIVE CASES

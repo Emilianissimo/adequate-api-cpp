@@ -25,7 +25,7 @@ public:
             this->username = query["username"];
         }
         if (query.contains("email")) {
-            this->username = query["email"];
+            this->email = query["email"];
         }
         if (query.contains("id__in")) {
             this->id__in = UserListFilter::parseIds(query["id__in"]);

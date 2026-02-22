@@ -7,7 +7,7 @@
 net::awaitable<std::vector<UserSerializer>> UsersService::list(UserListFilter& filters, std::string host) const {
     LoggerSingleton::get().info(
         "UsersService::list: started", {
-            {"id", filters.limit.has_value() ? std::to_string(filters.limit.value()) : "null"},
+            {"id", filters.id.has_value() ? std::to_string(filters.id.value()) : "null"},
             {"id__in", filters.id__in.value_or(std::vector<int64_t>{})},
             {"username", filters.username.value_or("null")},
             {"username__in", filters.username__in.value_or(std::vector<std::string>{})},

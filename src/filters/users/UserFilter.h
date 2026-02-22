@@ -12,7 +12,7 @@ public:
             this->username = query["username"];
         }
         if (query.contains("email")) {
-            this->username = query["email"];
+            this->email = query["email"];
         }
         if (query.contains("id")) {
             this->id = std::stoull(query["id"]);

@@ -68,7 +68,7 @@ public:
 
     void remove(const std::filesystem::path& relativePath) const;
 
-    bool exists(std::filesystem::path relativePath) const;
+    bool exists(const std::filesystem::path& relativePath) const;
 
     [[nodiscard]] const Options& options() const noexcept { return opts_; };
 
