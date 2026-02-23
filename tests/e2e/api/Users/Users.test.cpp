@@ -1,4 +1,14 @@
 #include <gtest/gtest.h>
+
+#include <boost/asio.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+
+#include <filesystem>
+#include <fstream>
+#include <random>
+#include <sstream>
+
 #include <nlohmann/json.hpp>
 #include "UsersClient.h"
 #include "../../auth/AuthSession.h"
@@ -73,6 +83,10 @@ TEST(UsersIndex, AppliesLimit)
     ASSERT_TRUE(body.is_array());
     ASSERT_EQ(static_cast<int>(body.size()), limit);
 }
+
+/// PATCH AND MEDIA TESTING
+
+
 
 /// NEGATIVE CASES
 
