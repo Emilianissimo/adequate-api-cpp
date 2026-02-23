@@ -24,6 +24,8 @@ services:
       args:
         CMAKE_EXTRA_FLAGS: "-DAPP_PWHASH_TEST_PROFILE=ON"
     working_dir: /work
+    volumes:
+      - test_media:/work/media
     env_file:
       - .env.test
     depends_on:
@@ -40,6 +42,8 @@ services:
     build:
       context: .
       dockerfile: docker/e2e/nginx/Dockerfile
+    volumes:
+      - test_media:/work/media:ro
     ports:
       - "8111:80"
     depends_on:
@@ -100,6 +104,7 @@ volumes:
     driver: local
   test_cache:
     driver: local
+  test_media:
 
 networks:
   test_cpp_api:

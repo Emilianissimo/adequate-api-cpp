@@ -21,7 +21,7 @@ namespace test::http
         : client_(std::move(host), std::move(port))
         {
             if (!bearer.empty())
-                client_.setDefaultHeader("Authorization", bearer);
+                client_.setDefaultHeader("Authorization",  bearer);
         }
 
         UsersIndexResponse index(const std::string& query = "")
@@ -38,18 +38,42 @@ namespace test::http
             UsersIndexResponse out;
             out.status = response.status;
             out.rawBody = response.body;
-            out.body = nlohmann::json::parse(response.body);
+            out.body = json::parse(response.body);
             return out;
         }
 
-        UsersStoreResponse store(const nlohmann::json& payload) {
+        UsersStoreResponse store(const json& payload) {
             auto res = client_.postJson("/users", payload.dump());
 
             UsersStoreResponse out;
             out.status = res.status;
             out.rawBody = res.body;
-            out.body = nlohmann::json::parse(res.body);
+            out.body = json::parse(res.body);
             return out;
+        }
+
+        RawResponse patchPictureMultipart(
+            const int64_t id,
+            const std::string& boundary,
+            const std::string& multipartBody
+        )
+        {
+            const std::string target = "/users/" + std::to_string(id);
+            return client_.patchMultipart(target, boundary, multipartBody);
+        }
+
+        HttpResponse remove(const int64_t id)
+        {
+            const std::string target = "/users/" + std::to_string(id);
+            return client_.del(target);
+        }
+
+        RawResponse getRaw(
+            const std::string& path,
+            const std::vector<std::pair<std::string,std::string>>& extraHeaders = {}
+        )
+        {
+            return client_.getRaw(path, extraHeaders);
         }
     private:
         TestHttpClient client_;

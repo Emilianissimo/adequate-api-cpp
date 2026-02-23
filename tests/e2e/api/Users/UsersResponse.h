@@ -6,16 +6,17 @@
 #define BEAST_API_USERSRESPONSE_H
 
 #include <string>
-#include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
+
+using nlohmann::json;
 
 namespace test::http
 {
-    namespace http = boost::beast::http;
+    namespace http = beast::http;
 
     struct UsersIndexResponse {
         http::status status{};
-        nlohmann::json body; // array
+        json body; // array
         std::string rawBody;
 
         bool ok() const { return status == http::status::ok && body.is_array(); }
@@ -23,7 +24,7 @@ namespace test::http
 
     struct UsersStoreResponse {
         http::status status{};
-        nlohmann::json body;
+        json body;
         std::string rawBody;
 
         bool created() const { return status == http::status::created; }

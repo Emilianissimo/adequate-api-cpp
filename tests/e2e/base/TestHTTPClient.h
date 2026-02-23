@@ -7,7 +7,10 @@
 
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
+#include <nlohmann/json.hpp>
 #include <string>
+
+using nlohmann::json;
 
 namespace test::http
 {
@@ -21,6 +24,13 @@ namespace test::http
         http::status status;
         std::string body;
         std::multimap<std::string, std::string> headers;
+    };
+
+    struct RawResponse {
+        http::status status;
+        json body;
+        std::string rawBody;
+        std::map<std::string, std::string> headers;
     };
 
     class TestHttpClient
@@ -48,6 +58,84 @@ namespace test::http
 
         void setDefaultHeader(std::string k, std::string v) {
             defaultHeaders_.emplace(std::move(k), std::move(v));
+        }
+
+        HttpResponse del(
+            const std::string& target,
+            const std::multimap<std::string, std::string>& headers = {}
+        )
+        {
+            return request(http::verb::delete_, target, "", merge(headers));
+        }
+
+        RawResponse patchMultipart(
+            const std::string& target,
+            const std::string& boundary,
+            const std::string& multipartBody
+        )
+        {
+            std::multimap<std::string, std::string> h;
+            h.emplace("content-type", "multipart/form-data; boundary=" + boundary);
+            h.emplace("accept", "application/json");
+
+            auto [status, body, headers] = request(http::verb::patch, target, multipartBody, merge(h));
+
+            RawResponse out;
+            out.status = status;
+            out.rawBody = std::move(body);
+
+            // headers -> map (lowercase keys)
+            for (auto& [k, v] : headers) {
+                std::string lk = k;
+                std::ranges::transform(lk, lk.begin(), [](const unsigned char c){ return static_cast<char>(std::tolower(c)); });
+                out.headers[lk] = v;
+            }
+
+            try {
+                if (auto it = out.headers.find("content-type");
+                    it != out.headers.end() && it->second.find("application/json") != std::string::npos)
+                {
+                    out.body = json::parse(out.rawBody);
+                }
+            } catch (...) {
+                out.body = json();
+            }
+
+            return out;
+        }
+
+
+        RawResponse getRaw(
+            const std::string& path,
+            const std::vector<std::pair<std::string,std::string>>& extraHeaders = {})
+        {
+            std::multimap<std::string, std::string> h;
+            for (const auto& [k, v] : extraHeaders) h.emplace(k, v);
+
+            auto [status, body, headers] = request(http::verb::get, path, "", merge(h));
+
+            RawResponse out;
+            out.status = status;
+            out.rawBody = std::move(body);
+
+            for (auto& [k, v] : headers) {
+                std::string lk = k;
+                std::ranges::transform(lk, lk.begin(), [](const unsigned char c){ return static_cast<char>(std::tolower(c)); });
+                out.headers[lk] = v;
+            }
+
+            // JSON best-effort
+            try {
+                if (const auto it = out.headers.find("content-type");
+                    it != out.headers.end() && it->second.find("application/json") != std::string::npos)
+                {
+                    out.body = json::parse(out.rawBody);
+                }
+            } catch (...) {
+                out.body = json();
+            }
+
+            return out;
         }
 
     private:
