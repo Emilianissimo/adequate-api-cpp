@@ -119,7 +119,7 @@ std::string Router::normalizeTarget(const Request& request) {
 net::awaitable<Outcome> Router::runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) {
     // Compiling chain of middleware to one next()
     using Next = MiddlewareInterface::Next;
-    
+
     Next next = [leaf](Request& r) -> net::awaitable<Outcome> {
         co_return co_await leaf(r);
     };
@@ -203,9 +203,8 @@ net::awaitable<Response> Router::dispatch(Request request, const EnvConfig& env)
         {"method", std::string(http::to_string(request.method()))},
         {"target", std::string(request.target())}
     });
-    int error_code = 0;
     std::string error_msg;
-    const auto path = Router::normalizeTarget(request);
+    const auto path = normalizeTarget(request);
 
     auto middlewares = collectMiddlewaresFor(path);
 
@@ -229,12 +228,12 @@ net::awaitable<Response> Router::dispatch(Request request, const EnvConfig& env)
     }
 
     if (!methods)
-        co_return co_await Router::runAfter(request, Router::render(request, Router::make404(request)), middlewares);
+        co_return co_await runAfter(request, render(request, make404(request)), middlewares);
 
     // Auto-HEAD: if no HEAD, but GET exists — return GET without body
     if (request.method() == http::verb::head && !methods->contains(http::verb::head) && methods->contains(http::verb::get)) {
         Outcome outcome = co_await runChain(request, methods->at(http::verb::get), middlewares);
-        Response response = Router::render(request, std::move(outcome));
+        Response response = render(request, std::move(outcome));
         response.body().clear();
         response.set(http::field::content_length, "0");
         for (auto& middleware : middlewares) {
@@ -245,12 +244,12 @@ net::awaitable<Response> Router::dispatch(Request request, const EnvConfig& env)
 
      // Auto-OPTIONS: if no OPTIONS — return Allow
     if (request.method() == http::verb::options && !methods->count(http::verb::options)) {
-        co_return co_await Router::runAfter(request, Router::render(request, Router::makeOptionsAllow(request, *methods)), middlewares);
+        co_return co_await runAfter(request, render(request, makeOptionsAllow(request, *methods)), middlewares);
     }
 
     auto itMeth = methods->find(request.method());
     if (itMeth == methods->end()) {
-        co_return co_await Router::runAfter(request, Router::render(request, Router::make405(request, *methods)), middlewares);
+        co_return co_await runAfter(request, render(request, make405(request, *methods)), middlewares);
     }
 
     std::vector<std::string> allowed;
@@ -261,15 +260,16 @@ net::awaitable<Response> Router::dispatch(Request request, const EnvConfig& env)
 
     std::string ct = request.content_type();
 
-    if (!allowed.empty() && ct.empty()) {
-        co_return co_await Router::runAfter(
+    const bool hasBody = !request.raw().body().empty();
+    if (!allowed.empty() && ct.empty() && hasBody) {
+        co_return co_await runAfter(
             request,
-            Router::render(request, make415(request, *methods)),
+            render(request, make415(request, *methods)),
             middlewares
         );
     }
 
-    if (!allowed.empty()) {
+    if (!allowed.empty() && hasBody) {
         bool ok = false;
         for (const auto& t : allowed) {
             if (ct.find(t) != std::string::npos) {
@@ -279,9 +279,9 @@ net::awaitable<Response> Router::dispatch(Request request, const EnvConfig& env)
         }
 
         if (!ok) {
-            co_return co_await Router::runAfter(
+            co_return co_await runAfter(
                 request,
-                Router::render(request, make415(request, *methods)),
+                render(request, make415(request, *methods)),
                 middlewares
             );
         }
@@ -289,9 +289,9 @@ net::awaitable<Response> Router::dispatch(Request request, const EnvConfig& env)
 
     // DoS protection
     if (request.raw().body().size() > env.file_upload_limit_size) {
-        co_return co_await Router::runAfter(
+        co_return co_await runAfter(
             request,
-            Router::render(request, make413(request, *methods)),
+            render(request, make413(request, *methods)),
             middlewares
         );
     }
@@ -316,29 +316,27 @@ net::awaitable<Response> Router::dispatch(Request request, const EnvConfig& env)
     }
 
     if (!bodyContentTypeError.empty()) {
-        co_return co_await Router::runAfter(
+        co_return co_await runAfter(
             request,
-            Router::render(request, make400(request, bodyContentTypeError)),
+            render(request, make400(request, bodyContentTypeError)),
             middlewares
         );
     }
 
     try {
         auto fn = itMeth->second;
-        auto outcome = co_await Router::runChain(request, itMeth->second, middlewares);
-        Response response = Router::render(request, std::move(outcome));
-        co_return co_await Router::runAfter(request, std::move(response), middlewares);
+        auto outcome = co_await runChain(request, itMeth->second, middlewares);
+        Response response = render(request, std::move(outcome));
+        co_return co_await runAfter(request, std::move(response), middlewares);
     } catch (const DbError& e) {
-        error_code = 500;
         error_msg = e.what() && *e.what() ? e.what() : "Database error";
     } catch (const std::exception& e) {
-        error_code = 500;
         error_msg = e.what() && *e.what() ? e.what() : "Unexpected error";
     }
 
-    co_return co_await Router::runAfter(
+    co_return co_await runAfter(
         request,
-        Router::render(request, Router::make500(request, error_msg)),
+        render(request, make500(request, error_msg)),
         middlewares
     );
 }

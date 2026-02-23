@@ -198,7 +198,7 @@ net::awaitable<void> UsersRepository::remove(const std::int64_t& id) const
 
     co_await pool_->query(
         qb.str(),
-        {},
+        qb.params(),
         std::chrono::seconds(5)
     );
 }

@@ -34,13 +34,15 @@ enter_db:
 	docker exec -it cpp_api_db_container psql --username=core_db_user --dbname=core_db
 
 e2e-test-build:
-	docker compose --env-file .env.test -f docker-compose.e2e.yaml run --rm test_e2e bash -lc "cmake -S . -B build -G Ninja -DENABLE_TESTS=ON && cmake --build build -j --target e2e_tests"
+	docker compose -p cpp_api_e2e --env-file .env.test -f docker-compose.e2e.yaml up -d --build test_db test_redis test_migrate test_app test_nginx
 
 e2e-test-count:
-	docker compose --env-file .env.test -f docker-compose.e2e.yaml run --rm test_e2e bash -lc "ctest --test-dir build -N"
+	docker compose -p cpp_api_e2e --env-file .env.test -f docker-compose.e2e.yaml run --rm test_e2e bash -lc "ctest --test-dir build -N"
 
-e2e-test:
-	# should run one after another, for windows should be pasted manually or use semicolon separator
-	docker compose -p cpp_api_e2e --env-file .env.test -f docker-compose.e2e.yaml up -d --build test_db test_redis test_migrate test_app test_nginx
-	docker compose -p cpp_api_e2e --env-file .env.test -f docker-compose.e2e.yaml run --rm test_e2e
+e2e-test-remove:
 	docker compose -p cpp_api_e2e --env-file .env.test -f docker-compose.e2e.yaml down -v --remove-orphans
+
+e2e-test: e2e-test-build
+	# should run one after another, for windows should be pasted manually or use semicolon separator
+	docker compose -p cpp_api_e2e --env-file .env.test -f docker-compose.e2e.yaml run --rm test_e2e
+	e2e-test-remove

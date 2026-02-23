@@ -4,8 +4,6 @@
 #include <optional>
 #include <boost/algorithm/string/join.hpp>
 
-#include "core/file_system/FileSystemService.h"
-
 class SQLBuilder {
 public:
     explicit SQLBuilder(std::string tableName)
