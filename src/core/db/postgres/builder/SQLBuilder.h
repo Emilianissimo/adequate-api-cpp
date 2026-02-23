@@ -55,6 +55,11 @@ public:
         this->sql_ += "UPDATE " + this->tableName_ + " SET " + boost::algorithm::join(sets, ",");
     }
 
+    void remove()
+    {
+        this->sql_ = "DELETE FROM " + this->tableName_;
+    }
+
     void returning(const std::string& field) {
         this->sql_ += " RETURNING " + field;
     }

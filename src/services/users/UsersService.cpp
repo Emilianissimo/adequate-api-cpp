@@ -164,11 +164,27 @@ net::awaitable<void> UsersService::update(UserUpdateSerializer data, IncomingFil
     }
 }
 
-net::awaitable<bool> UsersService::exists(UserFilter& filters) const {
+net::awaitable<bool> UsersService::exists(const UserFilter& filters) const {
     LoggerSingleton::get().info(
         "UsersService::exists: started", {
             {"email", filters.email.value_or("null")},
         }
     );
     co_return co_await repo_.exists(filters);
+}
+
+net::awaitable<void> UsersService::remove(const uint64_t& id) const
+{
+    LoggerSingleton::get().info(
+        "UsersService::remove: called", {
+        {"id", id}
+        }
+    );
+    // Delete folder with existing file without accessing filename from db (one file - one dir)
+    const std::filesystem::path relativePath = FileSystemService::buildRelativeDir(
+        "users",
+        std::to_string(id)
+    );
+    if (fs_.exists(relativePath)) fs_.remove(relativePath);
+    co_return co_await repo_.remove(id);
 }

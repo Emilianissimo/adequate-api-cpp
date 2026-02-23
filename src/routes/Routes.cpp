@@ -29,5 +29,9 @@ namespace app{
             bind_handler(ctx->usersController.get(), &UsersController::update),
             {"multipart/form-data"}
         );
-    }
+        router.delete_(
+            "/users/{id}",
+            bind_handler(ctx->usersController.get(), &UsersController::remove)
+        );
+    };
 }

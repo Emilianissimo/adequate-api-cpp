@@ -21,11 +21,11 @@ public:
     fs_(fs),
     blockingPool_(blockingPool),
     passwordHasher_(passwordHasher) {}
+    net::awaitable<bool> exists(const UserFilter& filters) const;
     net::awaitable<std::vector<UserSerializer>> list(UserListFilter& filters, std::string host) const;
     net::awaitable<UserCreateResponseSerializer> create(UserCreateSerializer data) const;
-    net::awaitable<bool> exists(UserFilter& filters) const;
-
     net::awaitable<void> update(UserUpdateSerializer data, IncomingFile picture) const;
+    net::awaitable<void> remove(const uint64_t& id) const;
 private:
     UsersRepository& repo_;
     FileSystemService& fs_;

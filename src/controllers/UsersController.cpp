@@ -167,13 +167,51 @@ net::awaitable<Outcome> UsersController::update(const Request& request) const
         co_return error_response;
     }
 
-    UserCreateResponseSerializer user;
     try {
         co_await service_.update(serializer, picture);
     } catch (const ValidationError& e) {
         error_msg = e.what();
         LoggerSingleton::get().warn(
             "UsersController::update: User update failed: " + (error_msg.has_value() ? *error_msg : "")
+        );
+    }
+
+    if (error_msg){
+        JsonResult error_response{
+            json{{"error", *error_msg}},
+            http::status::conflict,
+            request.keep_alive()
+        };
+        co_return error_response;
+    }
+
+    JsonResult response{
+        json{},
+        http::status::no_content,
+        request.keep_alive()
+    };
+    co_return response;
+}
+
+net::awaitable<Outcome> UsersController::remove(const Request& request) const
+{
+    const std::string id_str = request.path_params.at("id");
+    const uint64_t id = std::stoi(id_str);
+
+    LoggerSingleton::get().info("UsersController::remove: called", {
+        {"method", std::string(http::to_string(request.method()))},
+        {"target", std::string(request.target())}
+    });
+
+    std::optional<std::string> error_msg;
+    try
+    {
+        co_await service_.remove(id);
+    } catch (const ValidationError& e)
+    {
+        error_msg = e.what();
+        LoggerSingleton::get().warn(
+            "UsersController::remove: User remove failed: " + (error_msg.has_value() ? *error_msg : "")
         );
     }
 

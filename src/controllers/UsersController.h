@@ -11,6 +11,7 @@ public:
     [[nodiscard]] net::awaitable<Outcome> index(const Request& request) const;
     net::awaitable<Outcome> store(const Request& request) const;
     net::awaitable<Outcome> update(const Request& request) const;
+    net::awaitable<Outcome> remove(const Request& request) const;
 
 private:
     UsersService& service_;

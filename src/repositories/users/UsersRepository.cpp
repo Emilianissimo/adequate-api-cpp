@@ -109,6 +109,10 @@ net::awaitable<bool> UsersRepository::exists(const UserFilter& filters) const {
 }
 
 net::awaitable<void> UsersRepository::create(UserEntity& entity) const {
+    LoggerSingleton::get().info("UsersRepository::create: called", {
+        {"email", entity.email.value_or("null")},
+        {"username", entity.username.value_or("null")},
+    });
     std::vector<std::optional<std::string>> params;
     params.emplace_back(entity.username);
     params.emplace_back(entity.email);
@@ -131,9 +135,10 @@ net::awaitable<void> UsersRepository::create(UserEntity& entity) const {
     }
 }
 
-net::awaitable<void> UsersRepository::update(UserEntity& entity) {
+net::awaitable<void> UsersRepository::update(UserEntity& entity) const
+{
     LoggerSingleton::get().info("UsersRepository::update: called", {
-        {"id", entity.id},
+        {"id", std::to_string(entity.id)},
         {"email", entity.email.value_or("null")},
         {"username", entity.username.value_or("null")},
         {"picture", entity.picture.value_or("null")},
@@ -174,10 +179,26 @@ net::awaitable<void> UsersRepository::update(UserEntity& entity) {
     qb.where("id", entity.id);
     qb.returning("id");
 
-    auto result = co_await pool_->query(
+    co_await pool_->query(
         qb.str(),
         // Remember to coordinate params and fields order to ensure SQL build correctly
         params,
+        std::chrono::seconds(5)
+    );
+}
+
+net::awaitable<void> UsersRepository::remove(const std::int64_t& id) const
+{
+    LoggerSingleton::get().info("UsersRepository::remove: called", {
+        {"id", std::to_string(id)},
+    });
+    SQLBuilder qb("users");
+    qb.remove();
+    qb.where("id", id);
+
+    co_await pool_->query(
+        qb.str(),
+        {},
         std::chrono::seconds(5)
     );
 }

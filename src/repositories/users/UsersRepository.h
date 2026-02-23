@@ -9,8 +9,9 @@ public:
     using BaseRepository::BaseRepository;
     net::awaitable<std::vector<UserEntity>> getList(UserListFilter& filters) const;
     [[nodiscard]] net::awaitable<UserEntity> getOne(const UserFilter& filters) const;
-    net::awaitable<void> create(UserEntity& entity) const;
     [[nodiscard]] net::awaitable<bool> exists(const UserFilter& filters) const;
 
-    net::awaitable<void> update(UserEntity& entity);
+    net::awaitable<void> create(UserEntity& entity) const;
+    net::awaitable<void> update(UserEntity& entity) const;
+    net::awaitable<void> remove(const std::int64_t& id) const;
 };

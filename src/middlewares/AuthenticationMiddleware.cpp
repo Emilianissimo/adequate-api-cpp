@@ -34,7 +34,7 @@ net::awaitable<Outcome> AuthenticationMiddleware::handle(Request& request, Next 
     try {
         incomingUser = co_await this->jwtService_.decode(std::string(token));
     } catch (const JwtException& e) {
-        error_msg = AuthenticationMiddleware::mapJwtError(e);
+        error_msg = mapJwtError(e);
         LoggerSingleton::get().warn("AuthenticationMiddleware::handle: Jwt decode error");
     }
     if (error_msg) {
