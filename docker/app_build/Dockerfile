@@ -41,8 +41,7 @@ ARG CMAKE_EXTRA_FLAGS=""
 # Release or Debug
 RUN cmake -S . -B build -G Ninja \
     -DCMAKE_BUILD_TYPE=Debug ${CMAKE_EXTRA_FLAGS} \
-    -DENABLE_TESTS=OFF \
-    -DCMAKE_CXX_FLAGS="-std=c++20" && \
+    -DENABLE_TESTS=OFF && \
     cmake --build build
 
 # Params (rewrites by .env/compose)

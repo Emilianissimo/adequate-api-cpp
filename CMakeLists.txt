@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25...4.2)
 cmake_policy(SET CMP0135 NEW)
-project(beast_api CXX)
+project(beast_api LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -153,6 +153,7 @@ elseif(WIN32)
     )
 endif()
 
+target_compile_features(app PRIVATE cxx_std_20)
 target_compile_definitions(app PRIVATE HAVE_LIBMAGIC=1)
 
 option(APP_PWHASH_TEST_PROFILE "Use low pwhash limits (test profile)" OFF)

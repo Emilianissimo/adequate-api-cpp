@@ -1,3 +1,11 @@
+.PHONY: set-env
+
+set-env:
+	mkdir -p MEDIA TEST_MEDIA
+	test -f .env || cp .env.example .env
+	test -f .env.test || cp .env.test.example .env.test
+	@echo Environment prepared.
+
 build-app:
 	docker compose build app
 
