@@ -24,10 +24,6 @@ int main() {
         LoggerFactory::create("console")
     );
 
-    /// Using 1 I/O, so I would be sure, that blocking tasks will run correctly
-    /// Only because of them
-    // net::io_context ioc{1};
-    /// In case of using net::stand we can use
     net::io_context ioc{
         static_cast<int>(std::max(1u, std::thread::hardware_concurrency()))
     };

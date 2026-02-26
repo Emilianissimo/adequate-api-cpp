@@ -10,8 +10,6 @@ namespace net = boost::asio;
 
 /// NEED TO STRICTLY REVIEWED
 /// Written with GPT guide, but need to be tested on production env
-///
-/// CANCELLATION: working only on best effort before start. If task is running, cannot cancel (normal offloading pattern)
 
 inline std::exception_ptr make_operation_aborted_ep()
 {
