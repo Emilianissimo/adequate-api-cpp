@@ -9,38 +9,20 @@
 #include "core/renderers/JsonRenderer.h"
 #include "core/http/ResponseTypes.h"
 #include <fstream>
-#include <sstream>
+#include <utility>
 
 class SwaggerController {
 public:
-    explicit SwaggerController(const std::filesystem::path& rootPath) : rootPath_(rootPath) {};
+    explicit SwaggerController(
+        std::filesystem::path rootPath,
+        std::filesystem::path mediaPath
+    ) : rootPath_(std::move(rootPath)), mediaPath_(std::move(mediaPath)) {};
 
-    net::awaitable<Outcome> index(Request& request) const
-    {
-        std::ifstream file(rootPath_ / "swagger.json");
-
-        if (!file) {
-            co_return JsonResult{
-                json{{"error", "Swagger file not generated"}},
-                http::status::not_found,
-                false
-            };
-        }
-
-        std::stringstream buffer;
-        buffer << file.rdbuf();
-
-        Response response;
-        response.result(http::status::ok);
-        response.set(http::field::content_type, "application/json");
-        response.body() = buffer.str();
-        response.prepare_payload();
-
-        co_return response;
-    }
+    [[nodiscard]] net::awaitable<Outcome> index(const Request& request) const;
 
 private:
     std::filesystem::path rootPath_;
+    std::filesystem::path mediaPath_;
 };
 
 #endif //BEAST_API_SWAGGERCONTROLLER_H

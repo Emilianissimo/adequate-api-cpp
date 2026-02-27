@@ -16,12 +16,12 @@ void appctx::init(std::shared_ptr<AppContext> ctx) {
 }
 
 void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
-    std::filesystem::path rootPath = PROJECT_ROOT;
-    rootPath /= ctx->config.media_path;
-    ctx->rootPath = rootPath;
+    std::filesystem::path RootPath = PROJECT_ROOT;
+    ctx->rootPath = RootPath;
+    RootPath /= ctx->config.media_path;
 
     FileSystemService::Options fileSystemOptions = {
-        ctx->rootPath,
+        RootPath,
         ctx->config.media_path,
         ctx->config.file_upload_limit_size,
     };
@@ -30,7 +30,7 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
         fileSystemOptions
     );
     ctx->jwtService = std::make_unique<JwtService>(ctx->config);
-    ctx->swaggerController = std::make_unique<SwaggerController>(ctx->rootPath);
+    ctx->swaggerController = std::make_unique<SwaggerController>(ctx->rootPath, ctx->config.media_path);
     ctx->healthController = std::make_unique<HealthController>();
 
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);

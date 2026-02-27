@@ -6,6 +6,8 @@
 #define BEAST_API_OPENAPIBUILDER_H
 
 #include "types/OpenApiSchemaRegistry.h"
+#include <cctype>
+#include <algorithm>
 
 class OpenApiBuilder
 {
@@ -50,9 +52,12 @@ public:
                     };
                 }
 
-                documentation["paths"][route.original][std::string(http::to_string(method))] = Json{
-                {"summary", meta.summary},
-                {"responses", responses}
+                auto methodStr = std::string(http::to_string(method));
+                std::ranges::transform(methodStr, methodStr.begin(),
+                                       [](const unsigned char c){ return static_cast<char>(std::tolower(c)); });
+                documentation["paths"][route.original][methodStr] = Json{
+                    {"summary", meta.summary},
+                    {"responses", responses}
                 };
             }
         }

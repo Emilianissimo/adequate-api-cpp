@@ -3,7 +3,6 @@
 #include "core/http/ResponseTypes.h"
 #include "services/users/UsersService.h"
 #include "../core/http/interfaces/HttpInterface.h"
-#include "core/file_system/FileSystemService.h"
 
 class UsersController {
 public:
