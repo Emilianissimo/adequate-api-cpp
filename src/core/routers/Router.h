@@ -10,32 +10,77 @@
 #include <memory>
 #include <regex>
 
+#include "core/openapi/types/OpenApiMeta.h"
+
 class Router {
 public:
     using RouteFn = std::function<net::awaitable<Outcome>(Request&)>;
     using MethodMap = std::unordered_map<http::verb, RouteFn>;
+
+    struct RouteEntry {
+        std::regex regex;
+        std::vector<std::string> paramNames;
+        MethodMap methods;
+        std::string original;
+        std::unordered_map<http::verb, std::vector<std::string>> allowedContentTypes;
+
+        std::unordered_map<http::verb, OpenApiMeta> openapiMeta;
+    };
+
+    const std::vector<RouteEntry>& routes() const {
+        return table_;
+    }
     
     Router& add(
         http::verb method,
         const std::string& path,
         RouteFn fn,
-        const std::vector<std::string>& allowedContentTypes
+        const std::vector<std::string>& allowedContentTypes,
+        const OpenApiMeta& meta
     );
 
-    Router& get(std::string path, RouteFn fn) { return add(http::verb::get, std::move(path), std::move(fn), {}); };
-    Router& head(std::string path, RouteFn fn) { return add(http::verb::head, std::move(path), std::move(fn), {}); };
-    Router& options(std::string path, RouteFn fn) { return add(http::verb::options, std::move(path), std::move(fn), {}); };
-    Router& post(std::string path, RouteFn fn, const std::vector<std::string> &allowedContentTypes = {"application/json"}) {
-        return add(http::verb::post, std::move(path), std::move(fn), allowedContentTypes);
+    Router& get(std::string path, RouteFn fn, const OpenApiMeta& meta = {})
+    {
+        return add(http::verb::get, std::move(path), std::move(fn), {}, meta);
     };
-    Router& put(std::string path, RouteFn fn, const std::vector<std::string> &allowedContentTypes = {"application/json"}) {
-        return add(http::verb::put, std::move(path), std::move(fn), allowedContentTypes);
+    Router& head(std::string path, RouteFn fn, const OpenApiMeta& meta = {})
+    {
+        return add(http::verb::head, std::move(path), std::move(fn), {}, meta);
     };
-    Router& patch(std::string path, RouteFn fn, const std::vector<std::string> &allowedContentTypes = {"application/json"}) {
-        return add(http::verb::patch, std::move(path), std::move(fn), allowedContentTypes);
+    Router& options(std::string path, RouteFn fn, const OpenApiMeta& meta = {})
+    {
+        return add(http::verb::options, std::move(path), std::move(fn), {}, meta);
     };
-    Router& delete_(std::string path, RouteFn fn, const std::vector<std::string> &allowedContentTypes = {"application/json"}) {
-        return add(http::verb::delete_, std::move(path), std::move(fn), allowedContentTypes);
+    Router& post(
+        std::string path, RouteFn fn,
+        const std::vector<std::string> &allowedContentTypes = {"application/json"},
+        const OpenApiMeta& meta = {}
+    ) {
+        return add(http::verb::post, std::move(path), std::move(fn), allowedContentTypes, meta);
+    };
+    Router& put(
+        std::string path,
+        RouteFn fn,
+        const std::vector<std::string> &allowedContentTypes = {"application/json"},
+        const OpenApiMeta& meta = {}
+    ) {
+        return add(http::verb::put, std::move(path), std::move(fn), allowedContentTypes, meta);
+    };
+    Router& patch(
+        std::string path,
+        RouteFn fn,
+        const std::vector<std::string> &allowedContentTypes = {"application/json"},
+        const OpenApiMeta& meta = {}
+    ) {
+        return add(http::verb::patch, std::move(path), std::move(fn), allowedContentTypes, meta);
+    };
+    Router& delete_(
+        std::string path,
+        RouteFn fn,
+        const std::vector<std::string> &allowedContentTypes = {"application/json"},
+        const OpenApiMeta& meta = {}
+    ) {
+        return add(http::verb::delete_, std::move(path), std::move(fn), allowedContentTypes, meta);
     };
 
     /// Use globally
@@ -46,13 +91,6 @@ public:
     net::awaitable<Response> dispatch(Request request, const EnvConfig& env) const;
 
 private:
-    struct RouteEntry {
-        std::regex regex;
-        std::vector<std::string> paramNames;
-        MethodMap methods;
-        std::string original;
-        std::unordered_map<http::verb, std::vector<std::string>> allowedContentTypes;
-    };
     std::vector<RouteEntry> table_;
 
     std::vector<std::shared_ptr<MiddlewareInterface>> global_middlewares_;

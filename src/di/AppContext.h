@@ -13,10 +13,13 @@
 /// Authentication
 #include "controllers/auth/AuthenticationController.h"
 #include "core/hashers/SodiumPasswordHasher.h"
+#include "core/openapi/controllers/SwaggerController.h"
 #include "middlewares/AuthenticationMiddleware.h"
 #include "services/auth/AuthenticationService.h"
 
 struct AppContext {
+    std::filesystem::path rootPath;
+
     // Add a pool for blocking operations (files, cryptography, heavy calculations)
     std::shared_ptr<net::thread_pool> blockingPool;
     std::shared_ptr<PgPool> pg;
@@ -26,6 +29,7 @@ struct AppContext {
     EnvConfig config;
     std::unique_ptr<JwtService> jwtService;
     std::unique_ptr<FileSystemService> fileSystemService;
+    std::unique_ptr<SwaggerController> swaggerController;
 
     std::unique_ptr<HealthController> healthController;
 

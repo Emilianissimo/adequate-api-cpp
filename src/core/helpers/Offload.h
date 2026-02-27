@@ -6,7 +6,7 @@
 #include <atomic>
 #include <memory>
 
-namespace net = boost::asio;
+#include "core/http/interfaces/HttpInterface.h"
 
 /// NEED TO STRICTLY REVIEWED
 /// Written with GPT guide, but need to be tested on production env

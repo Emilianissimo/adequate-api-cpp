@@ -10,17 +10,25 @@
 
 using namespace std;
 
-Router& Router::add(http::verb method, const std::string& path, RouteFn fn, const std::vector<std::string>& allowedContentTypes) {
+Router& Router::add(
+    const http::verb method,
+    const std::string& path,
+    RouteFn fn,
+    const std::vector<std::string>& allowedContentTypes,
+    const OpenApiMeta& meta
+) {
     for (auto& entry : table_) {
         if (entry.original == path) {
             entry.methods[method] = std::move(fn);
             entry.allowedContentTypes[method] = std::move(allowedContentTypes);
+            entry.openapiMeta[method] = meta;
             return *this;
         }
     }
     auto entry = compileRoute(path);
     entry.methods[method] = std::move(fn);
     entry.allowedContentTypes[method] = std::move(allowedContentTypes);
+    entry.openapiMeta[method] = meta;
     table_.push_back(std::move(entry));
     return *this;
 }

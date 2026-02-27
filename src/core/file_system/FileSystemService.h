@@ -10,10 +10,8 @@
 #include <string_view>
 #include <unordered_set>
 #include <vector>
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/any_io_executor.hpp>
+#include "core/http/interfaces/HttpInterface.h"
 
-namespace net = boost::asio;
 
 struct StoredFileInfo
 {

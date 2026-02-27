@@ -5,7 +5,7 @@
 
 namespace {
     std::shared_ptr<AppContext> g_ctx;
-    std::atomic<bool> g_inited{false};
+    std::atomic g_inited{false};
 }
 
 void appctx::init(std::shared_ptr<AppContext> ctx) {
@@ -18,9 +18,10 @@ void appctx::init(std::shared_ptr<AppContext> ctx) {
 void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
     std::filesystem::path rootPath = PROJECT_ROOT;
     rootPath /= ctx->config.media_path;
+    ctx->rootPath = rootPath;
 
     FileSystemService::Options fileSystemOptions = {
-        rootPath,
+        ctx->rootPath,
         ctx->config.media_path,
         ctx->config.file_upload_limit_size,
     };
@@ -29,6 +30,7 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
         fileSystemOptions
     );
     ctx->jwtService = std::make_unique<JwtService>(ctx->config);
+    ctx->swaggerController = std::make_unique<SwaggerController>(ctx->rootPath);
     ctx->healthController = std::make_unique<HealthController>();
 
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);

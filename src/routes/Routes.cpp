@@ -1,6 +1,8 @@
 #include "routes/Routes.h"
 #include "controllers/HealthController.h"
 #include "controllers/UsersController.h"
+#include "core/openapi/controllers/SwaggerController.h"
+#include "core/openapi/services/SwaggerService.h"
 #include "middlewares/AuthenticationMiddleware.h"
 
 namespace app{
@@ -10,7 +12,16 @@ namespace app{
         // router.use(std::make_shared<RequestIdMiddleware>());
         // router.use(std::make_shared<LoggingMiddleware>());
         /// Scoped
-        router.get("/health", bind_handler(ctx->healthController.get(), &HealthController::index));
+        router.get(
+            "/health",
+            bind_handler(ctx->healthController.get(), &HealthController::index),
+            OpenApiMeta{
+            "Health check endpoint",
+            {
+                {static_cast<int>(http::status::ok), "Service healthy", "HealthResponse"}
+                }
+            }
+        );
 
         /// Authentication
         router.post("/register", bind_handler(
@@ -33,5 +44,14 @@ namespace app{
             "/users/{id}",
             bind_handler(ctx->usersController.get(), &UsersController::remove)
         );
+
+        // Swagger docs
+        router.get(
+            "/swagger",
+            bind_handler(ctx->swaggerController.get(), &SwaggerController::index)
+        );
+
+        HealthController::registerOpenApi();
+        SwaggerService::generate(router, ctx->rootPath);
     };
 }

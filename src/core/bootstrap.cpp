@@ -13,10 +13,9 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <iostream>
 #include <memory>
+#include "core/http/interfaces/HttpInterface.h"
 
 namespace beast = boost::beast;
-namespace http  = beast::http;
-namespace net   = boost::asio;
 using tcp       = net::ip::tcp;
 using net::awaitable;
 using net::co_spawn;
