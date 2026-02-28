@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="icon" href="./logo.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <title>AdequateAPI — coroutine-first C++ backend</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+  <style>.logo{width: 32px;}</style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="badge">C++20 • Boost.Asio coroutines • Boost.Beast HTTP • PostgreSQL</div>
+      <h1><img class="logo" style="margin-right: 1rem;" src="./logo.png">AdequateAPI</h1>
+      <p class="subtitle">
+        Coroutine-first backend framework focused on deterministic execution, explicit async,
+        and production-grade behavior. No hidden thread pools. No runtime magic.
+      </p>
+
+      <div class="actions">
+        <a class="btn" href="https://github.com/Emilianissimo/adequate-api-cpp">↗ GitHub Repo</a>
+        <a class="btn secondary" href="https://github.com/Emilianissimo/adequate-api-cpp/wiki/Quick-start">⚡ Quickstart</a>
+        <a class="btn secondary" href="https://github.com/Emilianissimo/adequate-api-cpp/wiki">📚 Docs</a>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Explicit execution model</h3>
+          <p>IO stays on the event loop. CPU work is explicitly offloaded. You control where code runs.</p>
+        </div>
+        <div class="card">
+          <h3>Coroutine-first, not callback-first</h3>
+          <p>Handlers are awaitable. No callback pyramids. Composition stays readable under load.</p>
+        </div>
+        <div class="card">
+          <h3>PostgreSQL async integration</h3>
+          <p>Pool + awaitable execution. Transaction scope owned by Services (not “magic inside repos”).</p>
+        </div>
+        <div class="card">
+          <h3>Swagger / OpenAPI generation</h3>
+          <p>Spec is generated from routes + schema registry and served as static files in /public/openapi.</p>
+        </div>
+      </div>
+
+      <div class="kv" style="margin-top:12px">
+        <span>Redis: planned</span>
+        <span>Docker-first</span>
+        <span>DI container</span>
+        <span>E2E stack (compose)</span>
+      </div>
+    </header>
+
+    <section id="quickstart" class="section">
+      <h2>Quickstart</h2>
+      <p class="small">Goal: run locally via Docker and hit the health endpoint.</p>
+      <pre><code>https://github.com/Emilianissimo/adequate-api-cpp.git
+cd &lt;repo&gt;
+make build
+make start</code></pre>
+      <pre><code>curl http://localhost:8080/health</code></pre>
+      <p class="small">Expected:</p>
+      <pre><code>{"status":"ok"}</code></pre>
+
+      <details>
+        <summary>Notes (important)</summary>
+        <ul>
+          <li>Async does <b>not</b> make a single request faster — it makes waiting cheaper and improves throughput under load.</li>
+          <li>Never block the IO executor. CPU-heavy work must be explicitly offloaded.</li>
+          <li>Redis is not part of the stack yet (planned).</li>
+        </ul>
+      </details>
+    </section>
+
+    <section id="docs" class="section">
+      <h2>Docs (short, to the point)</h2>
+      <p>These are the core pages you actually need.</p>
+      <ul>
+        <li><a href="https://github.com/Emilianissimo/adequate-api-cpp/wiki/Project-Layout">Architecture overview</a></li>
+        <li><a href="https://github.com/Emilianissimo/adequate-api-cpp/wiki/Services-&-Repositories">Services & Repositories</a></li>
+        <li><a href="https://github.com/Emilianissimo/adequate-api-cpp/wiki/Async-&-Offloading-Model">Async & Offloading model</a></li>
+        <li><a href="https://github.com/Emilianissimo/adequate-api-cpp/wiki/Database-Layer">Database layer</a></li>
+        <li><a href="https://github.com/Emilianissimo/adequate-api-cpp/wiki/Database-Migrations">Migrations</a></li>
+        <li><a href="https://github.com/Emilianissimo/adequate-api-cpp/wiki/Swagger---OpenAPI-Documentation">Swagger / OpenAPI (generated)</a></li>
+      </ul>
+      <hr />
+      <p class="small">If you want a multi-page docs site later, you can keep these sections as-is and split them into separate pages.</p>
+    </section>
+
+    <footer class="footer">
+      <div>© AdequateAPI • Built for deterministic performance and explicit concurrency.</div>
+      <div class="footer">
+        © 2026-<span id="y"></span> Adequate-Api.  <br>
+        Emil (Emilian) Erofeevskiy. <span style="color: #27c300">Let us make the world a better place than we found it.</span>
+        <br/>Issues/Ideas — create an <a href="https://github.com/Emilianissimo/adequate-api-cpp/issues">Issue</a>.
+      </div>
+      <script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+    </footer>
+  </div>
+</body>
+</html>

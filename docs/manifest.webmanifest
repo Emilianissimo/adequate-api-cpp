@@ -1,0 +1,3 @@
+{ "name":"AdequateApi - CPP Web Framework", "short_name":"AdequateApi",
+  "start_url":"/Adequate-Api/", "display":"standalone",
+  "icons":[{"src":"./logo.png","sizes":"1024x1024","type":"image/png"}] }
