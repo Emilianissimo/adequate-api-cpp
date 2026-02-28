@@ -1,4 +1,4 @@
-# CPP Web Framework
+# AdequateApi CPP Web Framework
 
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-blue)
 ![Boost.Asio](https://img.shields.io/badge/Boost-Asio-orange)
