@@ -15,6 +15,8 @@ coroutines and Boost.Beast.\
 Focused on deterministic async execution, explicit lifetimes, and
 architectural invariants.
 
+For details, check wiki: https://github.com/Emilianissimo/adequate-api-cpp/wiki
+
 ------------------------------------------------------------------------
 
 # Preface
