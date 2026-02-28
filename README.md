@@ -42,6 +42,8 @@ This framework exists to remove hidden behavior.
 It is not about reinventing frameworks.\
 It is about building a predictable one.
 
+### I didn't  offload Jwt token creation, 'cause I bit tired. If you want it - good practice for you, will be fixed in 1.0.0
+
 ------------------------------------------------------------------------
 
 # Quick start
@@ -341,6 +343,7 @@ Runtime   Docker
 -   Redis cache connector abstraction
 -   Swagger/OpenAPI generation
 -   Graceful shutdown refinement
+-   Offloading JWT encoding/decoding to decrease latency
 
 ------------------------------------------------------------------------
 
