@@ -21,5 +21,6 @@ public:
         );
     }
 
-    net::awaitable<Outcome> index(Request& request);
+    /// Note: Controller methods should not be static
+    net::awaitable<Outcome> index(const Request& request);
 };

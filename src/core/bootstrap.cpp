@@ -37,7 +37,7 @@ public:
     {
     }
 
-    net::awaitable<void> run() {
+    awaitable<void> run() {
         auto self = shared_from_this();
 
         try {
@@ -97,11 +97,8 @@ static awaitable<void> listener(const std::string& host, const uint16_t port, Ro
         tcp::socket sock(exec);
         co_await acc.async_accept(sock, use_awaitable);
 
-        // Создаем сессию через make_shared (выделяет память одним куском, меньше фрагментации)
         auto session = std::make_shared<HttpSession>(std::move(sock), router, env);
 
-        // Запускаем через co_spawn.
-        // session->run() держит self, так что session не умрет.
         co_spawn(exec, session->run(), detached);
     }
 }

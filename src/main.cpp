@@ -30,7 +30,7 @@ int main() {
 
     // Create a pool.
     // Note: thread_pool starts immediately upon creation.
-    auto blockingPool = std::make_shared<net::thread_pool>(
+    const auto blockingPool = std::make_shared<net::thread_pool>(
         std::thread::hardware_concurrency()
     );
     app::security::SodiumPasswordHasher passwordHasher{

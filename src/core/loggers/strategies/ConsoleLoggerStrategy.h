@@ -9,7 +9,7 @@
 
 class ConsoleLoggerStrategy final : public LoggerInterface {
 public:
-    void log(LogLevel level, const std::string& msg, const std::optional<std::map<std::string, std::any>>& params) override {
+    void log(const LogLevel level, const std::string& msg, const std::optional<std::map<std::string, std::any>>& params) override {
         std::lock_guard lk(m_);
 
         const auto now = std::chrono::system_clock::now();

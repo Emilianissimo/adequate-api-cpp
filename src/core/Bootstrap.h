@@ -4,5 +4,5 @@
 
 class Bootstrap {
 public:
-    int run(net::io_context& ioc, const EnvConfig& env, Router& router);
+    static int run(net::io_context& ioc, const EnvConfig& env, Router& router);
 };

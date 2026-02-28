@@ -8,8 +8,6 @@
 #include <sstream>
 #include <type_traits>
 
-using namespace std;
-
 Router& Router::add(
     const http::verb method,
     const std::string& path,

@@ -10,7 +10,7 @@
 #include "services/users/UsersService.h"
 
 
-class AuthenticationMiddleware : public MiddlewareInterface {
+class AuthenticationMiddleware final : public MiddlewareInterface {
 public:
     AuthenticationMiddleware(
         JwtService& jwtService,

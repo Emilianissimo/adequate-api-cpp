@@ -7,7 +7,7 @@
 
 using time_point = std::chrono::system_clock::time_point;
 
-/// Parse PostgreSQL timestamp (with optional fractional seconds) into chrono::time_point (UTC)
+/// Parse PostgresSQL timestamp (with optional fractional seconds) into chrono::time_point (UTC)
 inline time_point parse_pg_timestamp(const std::string& s) {
     std::tm tm{};
     int micros = 0;
@@ -18,20 +18,26 @@ inline time_point parse_pg_timestamp(const std::string& s) {
         throw std::runtime_error("Failed to parse timestamp: " + s);
     }
 
-    // fractional seconds, e.g. .123456
+    // fractional seconds, e.g.123456
     if (iss.peek() == '.') {
-        char dot = 0;
-        iss >> dot >> micros;
-        // pad micros to microseconds
-        const int digits = std::to_string(micros).size();
-        for (int i = digits; i < 6; i++) {
-            micros *= 10;
+        iss.get();
+
+        std::string frac;
+        while (std::isdigit(iss.peek())) {
+            frac.push_back(static_cast<char>(iss.get()));
+        }
+
+        if (!frac.empty()) {
+            if (frac.size() > 6) frac.resize(6);          // truncate to microseconds
+            while (frac.size() < 6) frac.push_back('0');  // pad to 6 digits
+
+            micros = std::stoi(frac);
         }
     }
 
     // interpret as UTC (not localtime!)
 #if defined(_WIN32)
-    std::time_t tt = _mkgmtime(&tm);
+    const std::time_t tt = _mkgmtime(&tm);
 #else
     const std::time_t tt = timegm(&tm); // GNU extension
 #endif
@@ -45,7 +51,7 @@ inline std::string to_iso_string(const time_point& tp) {
     using namespace std::chrono;
 
     const auto s = time_point_cast<seconds>(tp);
-    auto subseconds = duration_cast<microseconds>(tp - s).count();
+    const auto rep = duration_cast<microseconds>(tp - s).count();
 
     std::time_t t = system_clock::to_time_t(s);
     std::tm gmt{};
@@ -60,8 +66,8 @@ inline std::string to_iso_string(const time_point& tp) {
 
     std::ostringstream oss;
     oss << buf;
-    if (subseconds > 0) {
-        oss << "." << std::setfill('0') << std::setw(6) << subseconds;
+    if (rep > 0) {
+        oss << "." << std::setfill('0') << std::setw(6) << rep;
     }
     oss << "Z";
     return oss.str();

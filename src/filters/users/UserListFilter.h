@@ -20,7 +20,7 @@ public:
             this->offset = std::stoull(query["offset"]);
         }
         if (query.contains("username__in")) {
-            this->username__in = UserListFilter::parseStrings(query["username__in"]);
+            this->username__in = parseStrings(query["username__in"]);
         }
         if (query.contains("username")) {
             this->username = query["username"];
@@ -58,4 +58,3 @@ struct OpenApiFilterSpec<UserListFilter> {
         return p;
     }
 };
-

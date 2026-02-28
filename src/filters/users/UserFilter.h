@@ -47,4 +47,3 @@ struct OpenApiFilterSpec<UserFilter> {
         return p;
     }
 };
-
