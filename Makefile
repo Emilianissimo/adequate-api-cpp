@@ -29,6 +29,9 @@ stop:
 down:
 	docker compose down
 
+remove:
+	docker compose --env-file .env -f docker-compose.yaml down -v --remove-orphans
+
 migrate:
 	docker compose run --rm migrate up
 

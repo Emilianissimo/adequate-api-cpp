@@ -6,8 +6,32 @@
 #define BEAST_API_OPENAPIBUILDER_H
 
 #include "types/OpenApiSchemaRegistry.h"
+#include "core/http/interfaces/HttpInterface.h"
 #include <cctype>
 #include <algorithm>
+
+inline std::vector<OpenApiResponseMeta> withCommonErrors(
+    std::vector<OpenApiResponseMeta> ok,
+    const bool authRequired,
+    const bool hasBody
+) {
+    auto add = [&](const int status, std::string desc, std::optional<std::string> schema = "ErrorResponse") {
+        ok.push_back({status, std::move(desc), std::move(schema)});
+    };
+
+    add(static_cast<int>(http::status::internal_server_error), "Internal server error");
+
+    if (authRequired) {
+        add(static_cast<int>(http::status::unauthorized), "Unauthorized");
+        add(static_cast<int>(http::status::forbidden), "Forbidden");
+    }
+    if (hasBody) {
+        add(static_cast<int>(http::status::bad_request), "Bad request / validation error");
+        add(static_cast<int>(http::status::payload_too_large), "Payload too large");
+        add(static_cast<int>(http::status::unsupported_media_type), "Unsupported media type");
+    }
+    return ok;
+}
 
 class OpenApiBuilder
 {
@@ -36,34 +60,75 @@ public:
 
                 const auto& meta = route.openapiMeta.at(method);
 
-                Json responses;
+                Json responses = Json::object();
 
                 for (const auto& [code, description, schemaName] : meta.responses)
                 {
-                    responses[std::to_string(code)] = {
-                        {"description", description},
+                    if (schemaName.has_value())
+                    {
+                        responses[std::to_string(code)] = {
+                            {"description", description},
+                            {"content", {
+                                    {"application/json", {
+                                        {"schema", {
+                                            {"$ref", "#/components/schemas/" + schemaName.value()}
+                                        }}
+                                    }}
+                            }}
+                        };
+                    }
+
+                }
+
+                // ---- operation object
+                Json operation = {
+                    {"summary", meta.summary},
+                    {"responses", responses}
+                };
+
+                // ---- parameters (query/path)
+                if (!meta.parameters.is_null() && meta.parameters.is_array() && !meta.parameters.empty())
+                {
+                    operation["parameters"] = meta.parameters;
+                }
+
+                // ---- requestBody
+                if (meta.requestBody.has_value())
+                {
+                    const auto& rb = *meta.requestBody;
+
+                    operation["requestBody"] = {
+                        {"required", rb.required},
                         {"content", {
-                                {"application/json", {
+                                {rb.contentType, {
                                     {"schema", {
-                                        {"$ref", "#/components/schemas/" + schemaName}
+                                        {"$ref", std::string("#/components/schemas/") + rb.schemaRef}
                                     }}
                                 }}
                         }}
                     };
                 }
 
+                // ---- security
+                if (meta.authRequired)
+                {
+                    // Assumes you define bearerAuth in components.securitySchemes somewhere
+                    operation["security"] = Json::array({ Json{{"bearerAuth", Json::array()}} });
+                }
+
+                // method string -> lowercase
                 auto methodStr = std::string(http::to_string(method));
-                std::ranges::transform(methodStr, methodStr.begin(),
-                                       [](const unsigned char c){ return static_cast<char>(std::tolower(c)); });
-                documentation["paths"][route.original][methodStr] = Json{
-                    {"summary", meta.summary},
-                    {"responses", responses}
-                };
+                std::ranges::transform(
+                    methodStr, methodStr.begin(),
+                    [](const unsigned char c){ return static_cast<char>(std::tolower(c)); }
+                );
+
+                documentation["paths"][route.original][methodStr] = std::move(operation);
             }
         }
 
         // Schemas
-        Json schemas;
+        Json schemas = Json::object();
         for (const auto& [name, schema] :
              OpenApiSchemaRegistry::instance().schemas())
         {
@@ -71,6 +136,15 @@ public:
         }
 
         documentation["components"]["schemas"] = schemas;
+
+        // Security schemes (optional but recommended if you use authRequired)
+        // If you DON'T add this, Swagger UI will still show authRequired,
+        // but "Authorize" button won't work properly.
+        documentation["components"]["securitySchemes"]["bearerAuth"] = {
+            {"type", "http"},
+            {"scheme", "bearer"},
+            {"bearerFormat", "JWT"}
+        };
 
         return documentation;
     }

@@ -4,7 +4,7 @@
 #include <chrono>
 #include "core/interfaces/EntityInterface.h"
 
-struct UserEntity : public EntityInterface {
+struct UserEntity : EntityInterface {
     std::int64_t id;
     /// For partial update we may need optional
     std::optional<std::string>  username;

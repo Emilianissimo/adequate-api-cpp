@@ -56,7 +56,7 @@ int main() {
     Router router;
     app::define_routes(router, ctx);
     Bootstrap bootstrap;
-    int result =  bootstrap.run(ioc, env, router);
+    const int result =  bootstrap.run(ioc, env, router);
 
     // Important: join on exit, to ensure graceful end of tasks
     blockingPool->join();

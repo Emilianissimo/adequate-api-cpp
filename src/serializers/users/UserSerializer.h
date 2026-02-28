@@ -57,3 +57,29 @@ public:
     /// In other cases macros with be enough. Macros should live only in header file
     // NLOHMANN_DEFINE_TYPE_INTRUSIVE(UserSerializer, id, username, picture, created_at)
 };
+
+/// OpenApiGenerator Template
+
+template <class SerializerT>
+struct OpenApiSchemaSpec;
+
+template <>
+struct OpenApiSchemaSpec<UserSerializer> {
+    static std::string name() { return "UserResponse"; }
+
+    static nlohmann::json schema() {
+        return {
+        {"type","object"},
+        {"required", {"id","username","email","picture","created_at","updated_at"}},
+        {"properties",{
+            {"id", {{"type","integer"},{"format","int64"}}},
+            {"username", {{"type","string"}}},
+            {"email", {{"type","string"},{"format","email"}}},
+            {"picture", {{"type","string"},{"nullable",true}}},
+            {"created_at", {{"type","string"},{"format","date-time"}}},
+            {"updated_at", {{"type","string"},{"format","date-time"}}},
+        }},
+        {"additionalProperties", false}
+        };
+    }
+};

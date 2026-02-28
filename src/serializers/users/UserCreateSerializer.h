@@ -99,3 +99,44 @@ public:
         s.password = j["password"].get<std::string>();
     }
 };
+
+/// OpenApiGenerator Template
+
+template <class SerializerT>
+struct OpenApiSchemaSpec;
+
+template <>
+struct OpenApiSchemaSpec<UserCreateSerializer> {
+    static std::string name() { return "UserCreateRequest"; }
+
+    static nlohmann::json schema() {
+        return {
+                {"type","object"},
+                {"required", {"username","email","password"}},
+                {"properties", {
+                    {"username", {{"type","string"},{"minLength",1}}},
+                    {"email",    {{"type","string"},{"format","email"}}},
+                    {"password", {{"type","string"},{"minLength",6}}}
+                }},
+                {"additionalProperties", false}
+        };
+    }
+};
+
+template <>
+struct OpenApiSchemaSpec<UserCreateResponseSerializer> {
+    static std::string name() { return "UserCreateResponse"; }
+
+    static nlohmann::json schema() {
+        return {
+            {"type","object"},
+            {"required", {"id","username","email"}},
+            {"properties",{
+                {"id", {{"type","integer"},{"format","int64"}}},
+                {"username", {{"type","string"}}},
+                {"email", {{"type","string"},{"format","email"}}},
+            }},
+            {"additionalProperties", false}
+        };
+    }
+};

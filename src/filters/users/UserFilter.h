@@ -1,5 +1,9 @@
 #pragma once
+
+#include <optional>
+
 #include "core/filters/BaseFilter.h"
+#include "core/openapi/OpenApiParamBuilder.h"
 
 class UserFilter final : public BaseFilter {
 public:
@@ -19,3 +23,28 @@ public:
         }
     };
 };
+
+/// OpenApiGenerator Template
+
+template <class FilterT>
+struct OpenApiFilterSpec;
+
+template <>
+struct OpenApiFilterSpec<UserFilter> {
+    static nlohmann::json parameters() {
+        nlohmann::json p = nlohmann::json::array();
+
+        p.push_back(OpenApiParamBuilder::query(
+            "id", {{"type","integer"},{"format","int64"}})
+        );
+        p.push_back(OpenApiParamBuilder::query(
+            "username", {{"type","string"}})
+        );
+        p.push_back(OpenApiParamBuilder::query(
+            "email", {{"type","string"},{"format","email"}})
+        );
+
+        return p;
+    }
+};
+

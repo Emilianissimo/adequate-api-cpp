@@ -3,6 +3,7 @@
 #include "controllers/UsersController.h"
 #include "core/openapi/controllers/SwaggerController.h"
 #include "core/openapi/services/SwaggerService.h"
+#include "core/openapi/types/OpenApiResponses.h"
 #include "middlewares/AuthenticationMiddleware.h"
 
 namespace app{
@@ -16,10 +17,11 @@ namespace app{
             "/health",
             bind_handler(ctx->healthController.get(), &HealthController::index),
             OpenApiMeta{
-            "Health check endpoint",
-            {
-                {static_cast<int>(http::status::ok), "Service healthy", "HealthResponse"}
-                }
+            .summary="Health check endpoint",
+            .responses=OpenApiResponses{}
+                .ok("HealthResponse")
+                .withAlways()
+                .build()
             }
         );
 
@@ -33,16 +35,82 @@ namespace app{
 
         router.use("/users", ctx->authenticationMiddleware);
         /// Users CRUD
-        router.get("/users", bind_handler(ctx->usersController.get(), &UsersController::index));
-        router.post("/users", bind_handler(ctx->usersController.get(), &UsersController::store));
+        router.get(
+            "/users",
+            bind_handler(ctx->usersController.get(), &UsersController::index),
+            OpenApiMeta{
+                .summary = "List users",
+                .responses = OpenApiResponses{}
+                    .okArray("UserResponse")
+                    .withAuth()
+                    .withAlways()
+                    .build(),
+                .parameters = OpenApiFilterSpec<UserListFilter>::parameters(),
+                .authRequired = true
+            }
+        );
+        router.post(
+            "/users",
+            bind_handler(ctx->usersController.get(), &UsersController::store), {},
+            OpenApiMeta{
+                .summary = "Create user",
+                .responses = OpenApiResponses{}
+                    .created("UserCreateResponse")
+                    .withAuth()
+                    .withBody()
+                    .withAlways()
+                    .build(),
+                .requestBody = OpenApiRequestBody{
+                    .contentType="application/json",
+                    .schemaRef="UserCreateRequest",
+                    .required=true
+                },
+                .authRequired = true
+            }
+        );
+
+        /// Parameter declaration
+        auto params = nlohmann::json::array();
+        params.push_back(OpenApiParamBuilder::path("id", {{"type","integer"},{"format","int64"}}, "User id"));
         router.patch(
             "/users/{id}",
             bind_handler(ctx->usersController.get(), &UsersController::update),
-            {"multipart/form-data"}
+            {"multipart/form-data"},
+            OpenApiMeta{
+                .summary="Update user",
+                .responses=OpenApiResponses{}
+                    .noContent()
+                    .withAuth()
+                    .withAlways()
+                    .withBody()
+                    .build(),
+                .parameters=params,
+                .requestBody=OpenApiRequestBody{
+                    .contentType="multipart/form-data",
+                    .schemaRef="UserUpdateMultipartRequest",
+                    .required=true
+                },
+                .authRequired=true
+            }
         );
+
         router.delete_(
             "/users/{id}",
-            bind_handler(ctx->usersController.get(), &UsersController::remove)
+            bind_handler(ctx->usersController.get(), &UsersController::remove), {},
+            OpenApiMeta{
+                .summary="Delete user",
+                .responses=OpenApiResponses{}
+                    .noContent()
+                    .withAuth()
+                    .withAlways()
+                    .build(),
+                .parameters=params,
+                .requestBody=OpenApiRequestBody{
+                    .contentType="application/json",
+                    .required=true
+                },
+                .authRequired=true
+            }
         );
 
         // Swagger docs
@@ -51,7 +119,21 @@ namespace app{
             bind_handler(ctx->swaggerController.get(), &SwaggerController::index)
         );
 
+        /// OpenApi registration for controllers
         HealthController::registerOpenApi();
+        UsersController::registerOpenApi();
+
+        /// Basic error response
+        OpenApiSchemaRegistry::instance().registerSchema("ErrorResponse",{
+            {"type", "object"},
+            {"required", nlohmann::json::array({"error"})},
+            {"properties", {
+                {"error", {{"type", "string"}}}
+            }},
+            {"additionalProperties", false}
+        });
+
+        /// Swagger generation
         SwaggerService::generate(router, ctx->rootPath);
     };
 }
