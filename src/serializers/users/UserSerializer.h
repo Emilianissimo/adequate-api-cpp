@@ -5,6 +5,7 @@
 #include "entities/UserEntity.h"
 #include "core/serializers/BaseSerializer.h"
 #include "helpers/DatetimeConverter.h"
+#include "core/openapi/specs/OpenApiSchemaSpec.h"
 
 class UserSerializer final : public BaseSerializer<UserSerializer, UserEntity> {
 public:
@@ -59,9 +60,6 @@ public:
 };
 
 /// OpenApiGenerator Template
-
-template <class SerializerT>
-struct OpenApiSchemaSpec;
 
 template <>
 struct OpenApiSchemaSpec<UserSerializer> {

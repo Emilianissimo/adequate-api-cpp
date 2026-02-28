@@ -6,6 +6,7 @@
 #define BEAST_API_OPENAPIREGISTRAR_H
 
 #include "types/OpenApiSchemaRegistry.h"
+#include "core/openapi/specs/OpenApiSchemaSpec.h"
 
 class OpenApiRegistrar
 {

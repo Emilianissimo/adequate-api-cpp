@@ -28,10 +28,36 @@ namespace app{
         /// Authentication
         router.post("/register", bind_handler(
             ctx->authenticationController.get(), &AuthenticationController::registration
-        ));
+            ), {},
+            OpenApiMeta{
+                .summary = "Register",
+                .responses=OpenApiResponses{}
+                    .created()
+                    .withAlways()
+                    .build(),
+                .requestBody = OpenApiRequestBody{
+                    .contentType="application/json",
+                    .schemaRef="RegisterRequest",
+                    .required=true
+                }
+            }
+        );
         router.post("/login", bind_handler(
             ctx->authenticationController.get(), &AuthenticationController::login
-        ));
+        ), {},
+            OpenApiMeta{
+                .summary = "Login/Obtain tokens",
+                .responses=OpenApiResponses{}
+                    .ok("LoginResponse")
+                    .withAlways()
+                    .build(),
+                .requestBody = OpenApiRequestBody{
+                    .contentType="application/json",
+                    .schemaRef="LoginRequest",
+                    .required=true
+                }
+            }
+        );
 
         router.use("/users", ctx->authenticationMiddleware);
         /// Users CRUD
@@ -82,6 +108,7 @@ namespace app{
                     .noContent()
                     .withAuth()
                     .withAlways()
+                    .notFound()
                     .withBody()
                     .build(),
                 .parameters=params,
@@ -103,12 +130,9 @@ namespace app{
                     .noContent()
                     .withAuth()
                     .withAlways()
+                    .notFound()
                     .build(),
                 .parameters=params,
-                .requestBody=OpenApiRequestBody{
-                    .contentType="application/json",
-                    .required=true
-                },
                 .authRequired=true
             }
         );
@@ -122,6 +146,7 @@ namespace app{
         /// OpenApi registration for controllers
         HealthController::registerOpenApi();
         UsersController::registerOpenApi();
+        AuthenticationController::registerOpenApi();
 
         /// Basic error response
         OpenApiSchemaRegistry::instance().registerSchema("ErrorResponse",{

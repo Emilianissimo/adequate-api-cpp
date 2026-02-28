@@ -7,6 +7,7 @@
 #include "entities/UserEntity.h"
 #include "core/serializers/BaseSerializer.h"
 #include "core/loggers/LoggerSingleton.h"
+#include "core/openapi/specs/OpenApiSchemaSpec.h"
 
 class UserCreateResponseSerializer final : public BaseSerializer<UserCreateResponseSerializer, UserEntity> {
 public:
@@ -102,23 +103,20 @@ public:
 
 /// OpenApiGenerator Template
 
-template <class SerializerT>
-struct OpenApiSchemaSpec;
-
 template <>
 struct OpenApiSchemaSpec<UserCreateSerializer> {
     static std::string name() { return "UserCreateRequest"; }
 
     static nlohmann::json schema() {
         return {
-                {"type","object"},
-                {"required", {"username","email","password"}},
-                {"properties", {
-                    {"username", {{"type","string"},{"minLength",1}}},
-                    {"email",    {{"type","string"},{"format","email"}}},
-                    {"password", {{"type","string"},{"minLength",6}}}
-                }},
-                {"additionalProperties", false}
+        {"type","object"},
+        {"required", {"username","email","password"}},
+        {"properties", {
+            {"username", {{"type","string"},{"minLength",1}}},
+            {"email",    {{"type","string"},{"format","email"}}},
+            {"password", {{"type","string"},{"minLength",6}}}
+        }},
+        {"additionalProperties", false}
         };
     }
 };

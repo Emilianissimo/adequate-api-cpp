@@ -5,6 +5,7 @@
 #include "entities/UserEntity.h"
 #include "core/loggers/LoggerSingleton.h"
 #include "core/errors/Errors.h"
+#include "core/openapi/specs/OpenApiSchemaSpec.h"
 
 class LoginSerializer final : public BaseSerializer<LoginSerializer, UserEntity> {
 public:
@@ -60,5 +61,21 @@ public:
     }
 };
 
+template <>
+struct OpenApiSchemaSpec<LoginSerializer> {
+    static std::string name() { return "LoginRequest"; }
+
+    static nlohmann::json schema() {
+        return {
+            {"type","object"},
+            {"required", {"email","password"}},
+            {"properties", {
+                {"email",    {{"type","string"},{"format","email"}}},
+                {"password", {{"type","string"},{"minLength",6}}}
+            }},
+            {"additionalProperties", false}
+        };
+    }
+};
 
 #endif //BEAST_API_LOGINSERIALIZER_H

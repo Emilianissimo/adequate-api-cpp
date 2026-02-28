@@ -1,6 +1,7 @@
 #ifndef BEAST_API_REGISTERSERIALIZER_H
 #define BEAST_API_REGISTERSERIALIZER_H
-#include <regex>
+
+#include "core/openapi/specs/OpenApiSchemaSpec.h"
 #include "core/serializers/BaseSerializer.h"
 #include "entities/UserEntity.h"
 #include "core/loggers/LoggerSingleton.h"
@@ -74,5 +75,22 @@ public:
     }
 };
 
+template <>
+struct OpenApiSchemaSpec<RegisterSerializer> {
+    static std::string name() { return "RegisterRequest"; }
+
+    static nlohmann::json schema() {
+        return {
+            {"type","object"},
+            {"required", {"username","email","password"}},
+            {"properties", {
+                {"username", {{"type","string"},{"minLength",1}}},
+                {"email",    {{"type","string"},{"format","email"}}},
+                {"password", {{"type","string"},{"minLength",6}}}
+            }},
+            {"additionalProperties", false}
+        };
+    }
+};
 
 #endif //BEAST_API_REGISTERSERIALIZER_H

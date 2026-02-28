@@ -8,7 +8,7 @@
 #include "serializers/auth/LoginSerializer.h"
 #include "core/http/ResponseTypes.h"
 
-net::awaitable<Outcome> AuthenticationController::registration(Request& request) const {
+net::awaitable<Outcome> AuthenticationController::registration(const Request& request) const {
     LoggerSingleton::get().debug("AuthenticationController::registration: called", {
         {"method", std::string(http::to_string(request.method()))},
         {"target", std::string(request.target())}

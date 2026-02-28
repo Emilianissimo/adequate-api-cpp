@@ -25,6 +25,63 @@
                 ],
                 "type": "object"
             },
+            "LoginRequest": {
+                "additionalProperties": false,
+                "properties": {
+                    "email": {
+                        "format": "email",
+                        "type": "string"
+                    },
+                    "password": {
+                        "minLength": 6,
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "type": "object"
+            },
+            "LoginResponse": {
+                "additionalProperties": false,
+                "properties": {
+                    "accessToken": {
+                        "type": "string"
+                    },
+                    "refreshToken": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "refreshToken",
+                    "accessToken"
+                ],
+                "type": "object"
+            },
+            "RegisterRequest": {
+                "additionalProperties": false,
+                "properties": {
+                    "email": {
+                        "format": "email",
+                        "type": "string"
+                    },
+                    "password": {
+                        "minLength": 6,
+                        "type": "string"
+                    },
+                    "username": {
+                        "minLength": 1,
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "username",
+                    "email",
+                    "password"
+                ],
+                "type": "object"
+            },
             "UserCreateRequest": {
                 "additionalProperties": false,
                 "properties": {
@@ -179,14 +236,66 @@
         },
         "/login": {
             "post": {
-                "responses": {},
-                "summary": ""
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponse"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Login/Obtain tokens"
             }
         },
         "/register": {
             "post": {
-                "responses": {},
-                "summary": ""
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Internal server error"
+                    }
+                },
+                "summary": "Register"
             }
         },
         "/swagger": {
@@ -320,16 +429,6 @@
                     "required": true
                 },
                 "responses": {
-                    "201": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserCreateResponse"
-                                }
-                            }
-                        },
-                        "description": "Created"
-                    },
                     "400": {
                         "content": {
                             "application/json": {
@@ -423,16 +522,6 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/"
-                            }
-                        }
-                    },
-                    "required": true
-                },
                 "responses": {
                     "401": {
                         "content": {
@@ -453,6 +542,16 @@
                             }
                         },
                         "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not found"
                     },
                     "500": {
                         "content": {
@@ -525,6 +624,16 @@
                             }
                         },
                         "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not found"
                     },
                     "413": {
                         "content": {

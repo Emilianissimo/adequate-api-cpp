@@ -1,8 +1,10 @@
 #ifndef BEAST_API_TOKENRESPONSESERIALIZER_H
 #define BEAST_API_TOKENRESPONSESERIALIZER_H
+
 #include "core/serializers/BaseSerializer.h"
 #include "entities/TokenPairEntity.h"
 #include "core/loggers/LoggerSingleton.h"
+#include "core/openapi/specs/OpenApiSchemaSpec.h"
 
 class TokenResponseSerializer final : public BaseSerializer<TokenResponseSerializer, TokenPairEntity> {
 public:
@@ -25,6 +27,23 @@ public:
         refreshToken,
         accessToken
     )
+};
+
+template <>
+struct OpenApiSchemaSpec<TokenResponseSerializer> {
+    static std::string name() { return "LoginResponse"; }
+
+    static nlohmann::json schema() {
+        return {
+                {"type","object"},
+                {"required", {"refreshToken","accessToken"}},
+                {"properties",{
+                    {"refreshToken", {{"type","string"}}},
+                    {"accessToken", {{"type","string"}}},
+                }},
+                {"additionalProperties", false}
+        };
+    }
 };
 
 #endif //BEAST_API_TOKENRESPONSESERIALIZER_H

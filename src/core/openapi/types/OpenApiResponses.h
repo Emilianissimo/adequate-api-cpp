@@ -36,12 +36,23 @@ public:
         return std::move(*this);
     }
 
-    OpenApiResponses& created(std::string schemaRef, std::string desc = "Created") & {
-        addImpl(static_cast<int>(http::status::created), std::move(desc), std::move(schemaRef));
+    OpenApiResponses& created(std::string desc = "Created",
+                          std::optional<std::string> schemaRef = std::nullopt) & {
+        if (!schemaRef) {
+            addNoBodyImpl(static_cast<int>(http::status::created), std::move(desc));
+            return *this;
+        }
+        addImpl(static_cast<int>(http::status::created), std::move(desc), std::move(*schemaRef));
         return *this;
     }
-    OpenApiResponses&& created(std::string schemaRef, std::string desc = "Created") && {
-        addImpl(static_cast<int>(http::status::created), std::move(desc), std::move(schemaRef));
+
+    OpenApiResponses&& created(std::string desc = "Created",
+                               std::optional<std::string> schemaRef = std::nullopt) && {
+        if (!schemaRef) {
+            addNoBodyImpl(static_cast<int>(http::status::created), std::move(desc));
+            return std::move(*this);
+        }
+        addImpl(static_cast<int>(http::status::created), std::move(desc), std::move(*schemaRef));
         return std::move(*this);
     }
 
