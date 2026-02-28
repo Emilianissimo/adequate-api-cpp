@@ -2,10 +2,10 @@
 #include <boost/beast/http.hpp>
 #include <nlohmann/json.hpp>
 #include <variant>
+#include "core/response/Response.h"
 
 namespace http = boost::beast::http;
 
-using Response = http::response<http::string_body>;
 using json     = nlohmann::json;
 
 struct JsonResult {

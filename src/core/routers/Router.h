@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../http/interfaces/HttpInterface.h"
+#include "core/http/interfaces/HttpInterface.h"
 #include "core/request/Request.h"
 #include "core/interfaces/MiddlewareInterface.h"
 #include <unordered_map>
@@ -105,11 +105,11 @@ private:
     static Outcome make405(const Request& request, const MethodMap& mm);
     static Outcome make413(const Request& request, const MethodMap& mm);
     static Outcome make415(const Request& request, const MethodMap& mm);
-    static Outcome make500(const Request& request, std::string& err);
+    static Outcome make500(const Request& request, const std::string& err);
     static Outcome makeOptionsAllow(const Request& request, const MethodMap& mm);
 
     static net::awaitable<Outcome> runChain(Request& request, RouteFn leaf, std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) ;
-    static Response render(const Request& request, Outcome&& outcome) ;
+    static Response render(const Request& request, Outcome&& outcome);
     static net::awaitable<Response> runAfter(const Request& request, Response&& response, const std::vector<std::shared_ptr<MiddlewareInterface>>& middlewares) ;
     static RouteEntry compileRoute(const std::string& tmpl);
 };

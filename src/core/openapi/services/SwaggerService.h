@@ -11,11 +11,12 @@
 class SwaggerService
 {
 public:
-    static void generate(const Router& router, const std::filesystem::path& mediaPath)
+    /// Sync, works only on build
+    static void generate(const Router& router, const std::filesystem::path& rootPath)
     {
         const Json documentation = OpenApiBuilder::build(router);
 
-        std::ofstream file(mediaPath / "swagger.json");
+        std::ofstream file(rootPath / "public/openapi/swagger.json");
         file << documentation.dump(4);
         file.close();
     }

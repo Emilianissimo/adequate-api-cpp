@@ -5,13 +5,13 @@
 #ifndef BEAST_API_SWAGGERFILTER_H
 #define BEAST_API_SWAGGERFILTER_H
 
-#include "core/filters/BaseFilter.h"
 #include <optional>
 
-class SwaggerFilter final : public BaseFilter
-{
+#include "core/filters/BaseFilter.h"
+
+class SwaggerFilter final : public BaseFilter {
 public:
-    std::optional<std::size_t> json;
+    std::optional<bool> json;
 
     void parseRequestQuery(std::unordered_map<std::string, std::string> query) override {
         if (query.contains("json")) {

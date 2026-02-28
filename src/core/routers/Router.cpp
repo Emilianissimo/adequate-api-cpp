@@ -1,6 +1,6 @@
 #include "core/routers/Router.h"
 #include "core/errors/Errors.h"
-#include "core/renderers/JsonRenderer.h"
+#include "core/renderers/json/JsonRenderer.h"
 #include <boost/beast/http.hpp>
 #include "core/loggers/LoggerSingleton.h"
 #include <algorithm>
@@ -75,46 +75,54 @@ static std::string buildAllowHeader(const Router::MethodMap& mm) {
 }
 
 Outcome Router::make400(const Request& request, const std::string& error) {
-    const JsonResult result{json{{"error", error}}, http::status::bad_request, false};
-    return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
+    return JsonRenderer{}.error(
+        request, http::status::bad_request, error, false
+    );
 }
 
 Outcome Router::make404(const Request& request) {
-    const JsonResult result{json{{"error", "Not found"}}, http::status::not_found, false};
-    return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
+    return JsonRenderer{}.error(
+        request, http::status::not_found, "Not found", false
+    );
 }
 
 Outcome Router::make405(const Request& request, const MethodMap& mm) {
-    const JsonResult result{ json{{"error", "Method Not Allowed"}}, http::status::method_not_allowed, false };
-    Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
-    tmp.set(http::field::allow, buildAllowHeader(mm));
-    return tmp;
+    const std::unordered_map<http::field, std::string> additionalHeaders = {
+        {http::field::allow, buildAllowHeader(mm)}
+    };
+    return JsonRenderer{}.error(
+        request, http::status::method_not_allowed, "Method Not Allowed", false, additionalHeaders
+    );
 }
 
 Outcome Router::make413(const Request& request, const MethodMap& mm) {
-    const JsonResult result{json{{"error", "Payload is too large"}}, http::status::payload_too_large, false};
-    Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
-    tmp.set(http::field::allow, buildAllowHeader(mm));
-    return tmp;
+    const std::unordered_map<http::field, std::string> additionalHeaders = {
+        {http::field::allow, buildAllowHeader(mm)}
+    };
+    return JsonRenderer{}.error(
+        request, http::status::payload_too_large, "Payload is too large", false, additionalHeaders
+    );
 }
 
 Outcome Router::make415(const Request& request, const MethodMap& mm) {
-    const JsonResult result{json{{"error", "Unsupported media type"}}, http::status::unsupported_media_type, false};
-    Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
-    tmp.set(http::field::allow, buildAllowHeader(mm));
-    return tmp;
+    const std::unordered_map<http::field, std::string> additionalHeaders = {
+        {http::field::allow, buildAllowHeader(mm)}
+    };
+    return JsonRenderer{}.error(
+        request, http::status::unsupported_media_type, "Unsupported media type", false, additionalHeaders
+    );
 }
 
-Outcome Router::make500(const Request& request, std::string& err) {
-    const JsonResult result{json{{"error", err}}, http::status::internal_server_error, false};
-    return JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
+Outcome Router::make500(const Request& request, const std::string& err) {
+    return JsonRenderer{}.error(request, http::status::internal_server_error, err, false);
 }
 
 Outcome Router::makeOptionsAllow(const Request& request, const MethodMap& mm) {
-    const JsonResult result{ json{{"allow", buildAllowHeader(mm)}}, http::status::ok, true };
-    Response tmp = JsonRenderer::jsonResponse(request, result.status, result.body, result.keepAlive, result.dumpIndent);
-    tmp.set(http::field::allow, buildAllowHeader(mm));
-    return tmp;
+    const std::unordered_map<http::field, std::string> additionalHeaders = {
+        {http::field::allow, buildAllowHeader(mm)}
+    };
+    const JsonResult result{ json{{"allow", additionalHeaders}}, http::status::ok, true };
+    return JsonRenderer{}.render(request, result.status, result.body, result.keepAlive, additionalHeaders, result.dumpIndent);
 }
 
 /// Exact-match: cutting query string
@@ -156,11 +164,12 @@ Response Router::render(const Request& request, Outcome&& outcome) {
         if constexpr (std::is_same_v<T, Response>) {
             return std::forward<T0>(v);
         } else {
-            return JsonRenderer::jsonResponse(
+            return JsonRenderer{}.render(
                 request,
                 v.status,
                 v.body,
                 v.keepAlive,
+                {},
                 v.dumpIndent
             );
         }

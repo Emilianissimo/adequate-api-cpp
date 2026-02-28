@@ -8,11 +8,11 @@
 #include <optional>
 #include <stdexcept>
 
+#include "core/http/interfaces/HttpInterface.h"
 #include "core/configs/EnvConfig.h"
+#include "core/http/ResponseTypes.h"
 #include "core/loggers/LoggerSingleton.h"
 #include "core/multipart/MultipartAdapterFactory.h"
-
-namespace http = boost::beast::http;
 
 struct MultipartPart {
     std::string name;

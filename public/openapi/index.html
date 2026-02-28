@@ -62,7 +62,7 @@
 <script>
     window.onload = function () {
         SwaggerUIBundle({
-            url: "/swagger?json",
+            url: "./swagger.json", // TODO: remember to change path, if MEDIA_ROOT is changing
             dom_id: "#swagger-ui",
             deepLinking: true,
             presets: [

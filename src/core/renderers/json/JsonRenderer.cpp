@@ -1,14 +1,21 @@
-#include "core/renderers/JsonRenderer.h"
+#include "JsonRenderer.h"
 
-Response JsonRenderer::jsonResponse(
+Response JsonRenderer::render(
     const Request& request,
-    http::status status,
+    const http::status status,
     const json& body,
-    bool keepAlive,
-    int dumpIndent
+    const bool keepAlive,
+    std::unordered_map<http::field, std::string> additionalHeaders,
+    const int dumpIndent
 )
 {
     Response response{status, request.version()};
+
+    for (auto & [field, value] : additionalHeaders)
+    {
+        response.set(field, value);
+    }
+
     response.set(http::field::server, "beast-coawait");
     response.set(http::field::content_type, "application/json");
     response.keep_alive(keepAlive);
@@ -26,17 +33,18 @@ Response JsonRenderer::jsonResponse(
     return response;
 }
 
-Response JsonRenderer::jsonError(
+Response JsonRenderer::error(
     const Request& request,
     http::status status,
-    std::string_view message,
-    bool keepAlive,
-    int dumpIndent
+    const std::string_view message,
+    const bool keepAlive,
+    std::unordered_map<http::field, std::string> additionalHeaders,
+    const int dumpIndent
 )
 {
     const json body = {
         {"error", std::string(message)},
         {"status", static_cast<int>(status)}
     };
-    return jsonResponse(request, status, body, keepAlive, dumpIndent);
+    return render(request, status, body, keepAlive, additionalHeaders, dumpIndent);
 }

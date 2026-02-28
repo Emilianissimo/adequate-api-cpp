@@ -30,7 +30,7 @@ void appctx::wire(const std::shared_ptr<AppContext>& ctx) {
         fileSystemOptions
     );
     ctx->jwtService = std::make_unique<JwtService>(ctx->config);
-    ctx->swaggerController = std::make_unique<SwaggerController>(ctx->rootPath, ctx->config.media_path);
+    ctx->swaggerController = std::make_unique<SwaggerController>(ctx->rootPath);
     ctx->healthController = std::make_unique<HealthController>();
 
     ctx->usersRepository = std::make_unique<UsersRepository>(ctx->pg);

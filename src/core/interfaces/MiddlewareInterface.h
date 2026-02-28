@@ -1,7 +1,7 @@
 #pragma once
 #include "core/http/ResponseTypes.h"
 #include "core/request/Request.h"
-#include "../http/interfaces/HttpInterface.h"
+#include "core/http/interfaces/HttpInterface.h"
 #include <functional>
 
 struct MiddlewareInterface {

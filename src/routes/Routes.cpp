@@ -52,6 +52,6 @@ namespace app{
         );
 
         HealthController::registerOpenApi();
-        SwaggerService::generate(router, ctx->rootPath / ctx->config.media_path);
+        SwaggerService::generate(router, ctx->rootPath);
     };
 }

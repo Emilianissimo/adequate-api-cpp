@@ -2,7 +2,7 @@
 #include "core/request/Request.h"
 #include "core/http/ResponseTypes.h"
 #include "services/users/UsersService.h"
-#include "../core/http/interfaces/HttpInterface.h"
+#include "core/http/interfaces/HttpInterface.h"
 
 class UsersController {
 public:

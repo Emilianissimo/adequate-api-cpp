@@ -52,7 +52,7 @@ public:
 
                 Response res = co_await router_.dispatch(std::move(req), env_);
 
-                bool keep = res.keep_alive();
+                const bool keep = res.keep_alive();
 
                 co_await http::async_write(socket_, res, use_awaitable);
 
@@ -72,7 +72,7 @@ public:
     }
 
 private:
-    net::awaitable<void> sendError(http::status status, std::string msg) {
+    awaitable<void> sendError(http::status status, std::string msg) {
         Response res{status, 11};
         res.set(http::field::content_type, "text/plain");
         res.keep_alive(false);

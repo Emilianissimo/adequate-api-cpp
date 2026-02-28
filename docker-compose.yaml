@@ -16,6 +16,7 @@ services:
       - cpp_api
     volumes:
       - ./media:/work/media
+      - ./public:/work/public
 
   nginx:
     image: nginx:1.27-alpine
@@ -25,6 +26,7 @@ services:
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./media:/work/media:ro
+      - ./public:/work/public:ro
     depends_on:
       - app
     networks:
