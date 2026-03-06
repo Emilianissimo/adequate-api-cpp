@@ -418,3 +418,14 @@ This project aims for structural correctness and deterministic behavior.
 If something violates that principle, it should be discussed openly.
 
 Clear reasoning > silent approval.
+
+# Enterprise & Commercial Use
+AdequateAPI is free for individuals and small teams. However, for large-scale enterprise deployments, I offer:
+
+- Architectural Consulting: Deep integration of the framework into your infrastructure.
+
+- Custom Modules: Development of proprietary extensions (C++/Python/PHP).
+
+- Performance Audit: Tuning the system for high-load production environments.
+
+- For licensing or recruitment inquiries (Senior Backend / Infrastructure roles), contact me directly: emilerofeevskij@gmail.com

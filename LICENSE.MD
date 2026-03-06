@@ -1,21 +1,21 @@
-MIT License
+# Business Source License 1.1
+## Parameters:
 
-Copyright (c) 2026 Emilian (Emil) Erofeevskiy
+- Licensor: Emilian (Emil) Erofeevskiy (Эмилиан (Эмиль) Ерофеевский)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+- Software: AdequateAPI (including all sub-modules and components)
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+- Change Date: 2030-01-01
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+- Change License: MIT
+
+- Additional Use Grant:
+
+  - Non-Commercial Use: You may use the Software for any non-commercial purpose for free.
+    
+  - Small Business/Individual Use: You may use the Software for commercial purposes for free if your annual gross revenue is less than $100,000 USD.
+
+  - Educational & Open Source: Use in educational institutions and open-source projects is free.
+
+## Commercial Requirement:
+If your annual gross revenue exceeds $100,000 USD, any production use of the Software requires a commercial license or a direct service agreement with the Licensor.
